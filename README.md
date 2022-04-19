@@ -54,6 +54,5 @@ for i in range(10):
 ## Installation
 ```
 git clone https://github.com/ut-hnl-lab/paramopt.git
-cd paramopt
-pip install .
+pip install .\paramopt
 ```
