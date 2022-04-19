@@ -2,20 +2,19 @@
 
 from itertools import product
 import os
-from typing import Any, Callable, Generator, List, Literal, Optional, Tuple, Union
+from typing import Any, Callable, Generator, Literal, Optional, Tuple, Union
 
 import GPy.kern as gk
 import GPyOpt
-from matplotlib import cm, gridspec, pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 import pandas as pd
 
 from sklearn.gaussian_process import GaussianProcessRegressor
 import sklearn.gaussian_process.kernels as sk
 
-from .acquisition import UCB, EI
+from .parameter import ProcessParameter
 from . import utils
+from . import plot
 
 import warnings
 
@@ -35,11 +34,9 @@ class BaseLearner:
     """
     def __init__(self, savedir: str) -> None:
         self.savedir = savedir
-        self.X_names = []
+        self.pp = ProcessParameter()
         self.y_name = 'y'
         self.tag_name = 'tag'
-        self.Xs = []
-        self.X_grids = []
         self.X = np.empty((0, 0))
         self.y = np.empty(0)
         self.tags = []
@@ -54,11 +51,8 @@ class BaseLearner:
             values: パラメタが取り得る値のリストもしくは範囲のジェネレータ(range等)
         """
         array = np.array(values)
-        self.X_names.append(name)
-        self.Xs.append(array)
-        step = (np.max(array)-np.min(array))/100
-        self.X_grids.append(np.arange(np.min(array), np.max(array)+step, step))
         self.X = np.hstack((self.X, np.empty((0, 1))))
+        self.pp.add(name, array)
 
     def prefit(self, csvpath: str = None) -> None:
         """既存のcsvデータを学習させ, 続きから学習を始める.
@@ -73,7 +67,7 @@ class BaseLearner:
         if length == 0:
             return
 
-        self.X = df[self.X_names].values
+        self.X = df[self.pp.names].values
         self.y = df[self.y_name].values
         self.tags = df[self.tag_name].fillna('').tolist()
         self._fit()
@@ -110,103 +104,12 @@ class BaseLearner:
         raise NotImplementedError
 
     def _save(self) -> None:
-        df = pd.DataFrame(self.X, columns=self.X_names)
+        df = pd.DataFrame(self.X, columns=self.pp.names)
         df[self.y_name] = self.y
         df[self.tag_name] = self.tags
 
         os.makedirs(self.savedir, exist_ok=True)
         df.to_csv(os.path.join(self.savedir, 'search_history.csv'), index=False)
-
-    def graph(
-        self, X: np.ndarray, y:np.ndarray, mean: np.ndarray, std: np.ndarray,
-        acq: np.ndarray, objective_fn: Optional[Callable], onewindow: bool = True
-    ) -> None:
-        """学習の経過をグラフ化する.
-
-        Parameters
-        ----------
-            objective_fn: 目的関数
-                真の関数が分かっている場合(=テスト時)に指定すると, 共に描画.
-            onewindow: 1つのウィンドウに対してグラフを上書き更新するか否か
-                jupyter notebook使用時はFalseを推奨
-        """
-        if onewindow:
-            if self.fig is None:
-                self.fig = plt.figure()
-            else:
-                self.fig.clear()
-        else:
-            plt.close()
-            self.fig = plt.figure()
-
-        dim = len(self.Xs)
-        if dim == 1:  # 1次元パラメータ→2D描写
-            X_grid = self.X_grids[0]
-            spec = gridspec.GridSpec(ncols=1, nrows=2, height_ratios=[3, 1])
-
-            ax = self.fig.add_subplot(spec[0])
-            if objective_fn is not None:
-                ax.plot(
-                    X_grid, objective_fn(X_grid), 'k:', alpha=.5,
-                    label='Objective fn')
-            ax.plot(X_grid, mean, 'b-', label='Prediction')
-            ax.fill(
-                np.concatenate([X_grid, X_grid[::-1]]),
-                np.concatenate([mean -1.96*std, (mean + 1.96*std)[::-1]]),
-                'p-', alpha=.5, label='95% CI')
-            ax.plot(X, y, 'k.', label='Observations')
-            ax.plot(X[-1], y[-1], 'r*', markersize=10)
-            ax.set_xlabel(self.X_names[0])
-            ax.set_ylabel(self.y_name)
-            ax.legend()
-
-            ax2 = self.fig.add_subplot(spec[1])
-            ax2.plot(X_grid, acq, 'r-')
-            ax2.set_xlabel(self.X_names[0])
-            ax2.set_ylabel('Acquisition')
-
-        elif dim == 2:  # 2次元パラメータ→3D描写
-            X_grid1, X_grid2 = self.X_grids
-            Xmesh1, Xmesh2 = np.meshgrid(X_grid1, X_grid2)
-            mean = mean.reshape(X_grid1.shape[0], X_grid2.shape[0])
-            acq = acq.reshape(X_grid1.shape[0], X_grid2.shape[0])
-
-            ax = self.fig.add_subplot(111, projection='3d')
-            if objective_fn is not None:
-                ax.plot_wireframe(
-                    Xmesh1, Xmesh2, objective_fn(Xmesh1, Xmesh2),
-                    color='k', alpha=0.5, linewidth=0.5, label='Objective fn')
-            ax.plot_wireframe(
-                Xmesh1, Xmesh2, mean.T, color='b', alpha=0.6, linewidth=0.5,
-                label='Prediction')
-            ax.scatter(
-                X[:-1, 0], X[:-1, 1], y[:-1], c='black',
-                label='Observations')
-            ax.scatter(
-                X[-1, 0], X[-1, 1], y[-1], c='red', marker='*',
-                s=50)
-            contf = ax.contourf(
-                Xmesh1, Xmesh2, acq.T, zdir='z', offset=ax.get_zlim()[0],
-                cmap=cm.jet, levels=100)
-            self.fig.colorbar(contf, pad=0.08, shrink=0.6, label='Acquisition')
-            ax.set_xlabel(self.X_names[0])
-            ax.set_ylabel(self.X_names[1])
-            ax.set_zlabel(self.y_name)
-            ax.legend()
-
-        else:
-            raise NotImplementedError(f'{dim}D plot not supported')
-
-        plt.tight_layout()
-        os.makedirs(self.savedir, exist_ok=True)
-        self.fig.savefig(os.path.join(self.savedir, f'{self.tags[-1]}.png'))
-        if onewindow:
-            plt.pause(0.1)
-        else:
-            plt.show(block=False)
-            self.fig = None
-
-
 
 
 class GPR(BaseLearner):
@@ -234,8 +137,8 @@ class GPR(BaseLearner):
 
     def add_parameter(self, name: str, values: Union[list, Generator]) -> None:
         super().add_parameter(name, values)
-        self.X_combos = np.array(list(product(*self.Xs)))
-        self.X_grid_combos = np.array(list(product(*self.X_grids)))
+        self.X_combos = np.array(list(product(*self.pp.values)))
+        self.X_grid_combos = np.array(list(product(*self.pp.grids)))
 
     def next(self) -> Tuple[Any]:
         # 全てのパラメータの組み合わせに対する平均と分散を計算
@@ -249,11 +152,22 @@ class GPR(BaseLearner):
 
     def graph(
         self, objective_fn: Optional[Callable] = None, onewindow: bool = True,
-        **kwargs: Any
     ) -> None:
+        """学習の経過をグラフ化する.
+
+        Parameters
+        ----------
+            objective_fn: 目的関数
+                真の関数が分かっている場合(=テスト時)に指定すると, 共に描画.
+            onewindow: 1つのウィンドウに対してグラフを上書き更新するか否か
+                jupyter notebook使用時はFalseを推奨
+        """
         mean, std = self.model.predict(self.X_grid_combos, return_std=True)
         acq = self.acqfunc(mean=mean, std=std, ymax=np.max(self.y))
-        super().graph(self.X, self.y, mean, std, acq, objective_fn, onewindow)
+        plot.overwrite = onewindow
+        plot.plot(
+            self.pp, self.X, self.y, mean, std, acq, objective_fn, self.y_name)
+        plot.savefig(os.path.join(self.savedir, f'plot-{self.tags[-1]}.png'))
 
     def _fit(self) -> None:
         self.model.fit(self.X, self.y)
@@ -290,7 +204,7 @@ class GPyBO(BaseLearner):
         super().add_parameter(name, values)
         self.domain.append(
             {'name': name, 'type': 'discrete', 'domain': tuple(values)})
-        self.X_grid_combos = np.array(list(product(*self.X_grids)))
+        self.X_grid_combos = np.array(list(product(*self.pp.grids)))
 
     def next(self) -> Tuple[Any]:
         suggested_locations = self.model._compute_next_evaluations()
@@ -298,7 +212,7 @@ class GPyBO(BaseLearner):
         return next_X
 
     def graph(
-        self, onewindow: bool = True, use_original: bool = True, **kwargs: Any
+        self, onewindow: bool = True, gpystyle: bool = False, **kwargs: Any
     ) -> None:
         """学習の経過をグラフ化する.
 
@@ -306,19 +220,21 @@ class GPyBO(BaseLearner):
         ----------
             onewindow: 1つのウィンドウに対してグラフを上書き更新するか否か
                 jupyter notebook使用時はFalseを推奨
-            use_original: GPyOpt固有のグラフ描写関数を用いるか否か
+            gpystyle: GPyOpt固有のグラフ描写関数を用いるか否か
         """
-        if use_original:
+        if gpystyle:
             self.model.plot_acquisition(
                 filename=os.path.join(self.savedir, f'{self.tags[-1]}.png'),
-                label_x = self.X_names[0],
-                label_y = self.y_name if len(self.X_names) < 2 else self.X_names[1])
+                label_x = self.pp.names[0],
+                label_y = self.y_name if len(self.pp.names) < 2 else self.pp.names[1])
         else:
             mean, std = self.model.model.model.predict(self.X_grid_combos)
             acq = -self.model.acquisition.acquisition_function(self.X_grid_combos)
-            super().graph(
-                self.model.model.model.X, self.model.model.model.Y, mean, std,
-                acq, objective_fn=None, onewindow=onewindow)
+            plot.overwrite = onewindow
+            plot.plot(
+                self.pp, self.model.model.model.X, self.model.model.model.Y,
+                mean, std, acq, objective_fn=None)
+            plot.savefig(os.path.join(self.savedir, f'plot-{self.tags[-1]}.png'))
 
     def _fit(self) -> None:
         if self.model is None:
