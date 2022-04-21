@@ -7,7 +7,7 @@ from .optimizer import *
 
 def gpr1d_ucb():
     gpr = GPR(
-        savedir='output/test_gpr1d-ucb',
+        savedir='test_gpr1d-ucb',
         kernel=RBF(length_scale=0.5) * ConstantKernel() + WhiteKernel(),
         acqfunc=UCB(c=2.0),
         random_seed=71)
@@ -16,7 +16,7 @@ def gpr1d_ucb():
 
 def gpr1d_ei():
     gpr = GPR(
-        savedir='output/test_gpr1d-ei',
+        savedir='test_gpr1d-ei',
         kernel=RBF(length_scale=0.5) * ConstantKernel() + WhiteKernel(),
         acqfunc=EI(xi=0.0),
         random_seed=71)
@@ -25,7 +25,7 @@ def gpr1d_ei():
 
 def gpr2d_ucb():
     gpr = GPR(
-        savedir='output/test_gpr2d-ucb',
+        savedir='test_gpr2d-ucb',
         kernel=RBF(length_scale=5.0) * ConstantKernel() + WhiteKernel(),
         acqfunc=UCB(c=2.0),
         random_seed=71)
@@ -34,14 +34,15 @@ def gpr2d_ucb():
 
 def gpr2d_ei():
     gpr = GPR(
-        savedir='output/test_gpr2d-ei',
+        savedir='test_gpr2d-ei',
         kernel=RBF(length_scale=5.0) * ConstantKernel() + WhiteKernel(),
         acqfunc=EI(xi=0.0),
         random_seed=71)
     search_2d(gpr, f2)
 
 
-gpr1d_ucb()
-gpr1d_ei()
-gpr2d_ucb()
-gpr2d_ei()
+if __name__ == '__main__':
+    gpr1d_ucb()
+    gpr1d_ei()
+    gpr2d_ucb()
+    gpr2d_ei()

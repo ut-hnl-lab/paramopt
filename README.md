@@ -30,7 +30,8 @@ sin, cosで構成した関数にモデルをフィッティングさせる.
 <img src="https://user-images.githubusercontent.com/88641432/163952263-5861449f-5057-49a8-96e4-8c8f7e735a7c.gif" height=300>
 
 ## Examples
-1次元のシンプルな探索を行う例.
+1次元のシンプルな探索を行う例.<br>
+詳しくは[examples](https://github.com/ut-hnl-lab/paramopt/tree/main/examples)を参照.
 
 ```python
 from sklearn.gaussian_process.kernels import *
