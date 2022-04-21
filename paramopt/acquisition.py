@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Callable
 import numpy as np
 
 from scipy.stats import norm
@@ -62,3 +62,21 @@ class EI:
         Phi = 0.5 * erfc(-z / np.sqrt(2))
         # return (mean - ymax - self.xi)*ndtr(z) + std*norm.pdf(z)
         return  std * (z * Phi + phi)
+
+
+class Acquisition:
+    def __init__(self, func: Callable) -> None:
+        self.func = func
+
+    def get(
+        self, mean: np.ndarray, std: np.ndarray, X: np.ndarray, y: np.ndarray
+    ) -> None:
+        if isinstance(self.func, UCB):
+            return self.func(mean, std)
+        elif isinstance(self.func, EI):
+            if y.shape[0] == 0:
+                return self.func(mean, std, 0)
+            else:
+                return self.func(mean, std, np.max(y))
+        else:
+            raise NotImplementedError(f'Invalid acquisition type')
