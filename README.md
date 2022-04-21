@@ -42,7 +42,7 @@ gpr = GPR(  # 1
     acqfunc=UCB(c=2.0),
     random_seed=71)
 
-gpr.add_parameter('parameter', range(10))  # 2
+gpr.add_parameter(name='parameter', space=range(10))  # 2
 
 for i in range(10):
     next_x, = gpr.next()  # 3
