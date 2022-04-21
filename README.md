@@ -10,7 +10,7 @@ scikit-learn のガウス過程回帰をラップした, ベイズ最適化ラ�
 5. 評価値をモデルに学習させる.
 6. 3~5を繰り返す.
 
-学習の中断・再開や, 学習中の様子のグラフ化,・保存もサポート.
+学習の中断・再開や, 学習中の様子のグラフ化,・保存・gif動画化もサポート.
 
 ## Demo
 sin, cosで構成した関数にモデルをフィッティングさせる.
@@ -51,8 +51,15 @@ for i in range(10):
     gpr.graph()
 ```
 
+gif動画の生成.
+```python
+from paramopt import select_images, create_gif
+
+paths = select_images
+create_gif(paths)
+```
+
 ## Installation
 ```
-git clone https://github.com/ut-hnl-lab/paramopt.git
-pip install .\paramopt
+pip install git+https://github.com/ut-hnl-lab/paramopt.git
 ```
