@@ -8,7 +8,6 @@ from .parameter import ProcessParameter
 
 fig = None
 overwrite = False
-plt.tight_layout()
 
 
 def plot(pp: ProcessParameter, X: np.ndarray, y: np.ndarray,
@@ -131,8 +130,8 @@ def _refresh():
 
 def _show() -> None:
     global fig
+    plt.tight_layout()
     if overwrite:
         plt.pause(0.1)
     else:
         plt.show(block=False)
-        fig = None
