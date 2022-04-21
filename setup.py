@@ -1,11 +1,11 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name="paramopt",
-    version="0.2.0",
+    version="0.3.0",
     license="MIT",
     description="Library for easy parameter tuning using gaussian process regression",
     author="Kota Aono",
     url="https://github.com/ut-hnl-lab/paramopt.git",
-    packages=['paramopt'],
+    packages=find_packages(),
 )
