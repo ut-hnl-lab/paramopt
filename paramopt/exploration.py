@@ -12,6 +12,7 @@ import pandas as pd
 from sklearn.gaussian_process import GaussianProcessRegressor
 import sklearn.gaussian_process.kernels as sk
 
+from .acquisition import Acquisition
 from .parameter import ProcessParameter
 from . import utils
 from . import plot
@@ -42,7 +43,7 @@ class BaseLearner:
         self.tags = []
         self.fig = None
 
-    def add_parameter(self, name: str, values: Union[list, Generator]) -> None:
+    def add_parameter(self, name: str, space: Union[list, Generator]) -> None:
         """プロセスパラメータを追加する.
 
         Parameters
@@ -50,7 +51,7 @@ class BaseLearner:
             name: パラメータ名
             values: パラメタが取り得る値のリストもしくは範囲のジェネレータ(range等)
         """
-        array = np.array(values)
+        array = np.array(space)
         self.X = np.hstack((self.X, np.empty((0, 1))))
         self.pp.add(name, array)
 
@@ -131,12 +132,12 @@ class GPR(BaseLearner):
         super().__init__(savedir)
         self.model = GaussianProcessRegressor(
             kernel=kernel, n_restarts_optimizer=10, normalize_y=True)
-        self.acqfunc = acqfunc
+        self.acquisition = Acquisition(func=acqfunc)
         if random_seed is not None:
             self._fix_seed(random_seed)
 
-    def add_parameter(self, name: str, values: Union[list, Generator]) -> None:
-        super().add_parameter(name, values)
+    def add_parameter(self, name: str, space: Union[list, Generator]) -> None:
+        super().add_parameter(name, space)
         self.X_combos = np.array(list(product(*self.pp.values)))
         self.X_grid_combos = np.array(list(product(*self.pp.grids)))
 
@@ -145,13 +146,13 @@ class GPR(BaseLearner):
         mean, std = self.model.predict(self.X_combos, return_std=True)
 
         # 獲得関数値を基に次のパラメータの組み合わせを選択
-        acq = self.acqfunc(mean=mean, std=std, ymax=np.max(self.y))
+        acq = self.acquisition.get(mean, std, self.X, self.y)
         next_idx = np.argmax(acq)  # 獲得関数を最大化するパラメータの組み合わせ
         next_X = tuple(self.X_combos[next_idx])
         return next_X
 
     def graph(
-        self, objective_fn: Optional[Callable] = None, onewindow: bool = True,
+        self, objective_fn: Optional[Callable] = None, overwrite: bool = False,
     ) -> None:
         """学習の経過をグラフ化する.
 
@@ -159,12 +160,12 @@ class GPR(BaseLearner):
         ----------
             objective_fn: 目的関数
                 真の関数が分かっている場合(=テスト時)に指定すると, 共に描画.
-            onewindow: 1つのウィンドウに対してグラフを上書き更新するか否か
+            overwrite: 1つのウィンドウに対してグラフを上書き更新するか否か
                 jupyter notebook使用時はFalseを推奨
         """
         mean, std = self.model.predict(self.X_grid_combos, return_std=True)
-        acq = self.acqfunc(mean=mean, std=std, ymax=np.max(self.y))
-        plot.overwrite = onewindow
+        acq = self.acquisition.get(mean, std, self.X, self.y)
+        plot.overwrite = overwrite
         plot.plot(
             self.pp, self.X, self.y, mean, std, acq, objective_fn, self.y_name)
         plot.savefig(os.path.join(self.savedir, f'plot-{self.tags[-1]}.png'))
@@ -193,7 +194,7 @@ class GPyBO(BaseLearner):
         random_seed: Optional[int] = None, **kwargs: Any
     ) -> None:
         super().__init__(savedir)
-        self.acqfunc = acqfunc
+        self.acquisition = Acquisition(func=acqfunc)
         self.kwargs = kwargs
         self.model = None
         self.domain = []
@@ -212,13 +213,13 @@ class GPyBO(BaseLearner):
         return next_X
 
     def graph(
-        self, onewindow: bool = True, gpystyle: bool = False, **kwargs: Any
+        self, overwrite: bool = False, gpystyle: bool = False, **kwargs: Any
     ) -> None:
         """学習の経過をグラフ化する.
 
         Parameters
         ----------
-            onewindow: 1つのウィンドウに対してグラフを上書き更新するか否か
+            overwrite: 1つのウィンドウに対してグラフを上書き更新するか否か
                 jupyter notebook使用時はFalseを推奨
             gpystyle: GPyOpt固有のグラフ描写関数を用いるか否か
         """
@@ -230,7 +231,7 @@ class GPyBO(BaseLearner):
         else:
             mean, std = self.model.model.model.predict(self.X_grid_combos)
             acq = -self.model.acquisition.acquisition_function(self.X_grid_combos)
-            plot.overwrite = onewindow
+            plot.overwrite = overwrite
             plot.plot(
                 self.pp, self.model.model.model.X, self.model.model.model.Y,
                 mean, std, acq, objective_fn=None)
@@ -239,7 +240,7 @@ class GPyBO(BaseLearner):
     def _fit(self) -> None:
         if self.model is None:
             self.model = GPyOpt.methods.BayesianOptimization(
-                f=None, domain=self.domain, acquisition_type=self.acqfunc,
+                f=None, domain=self.domain, acquisition_type=self.acquisition,
                 X=self.X, Y=self.y[:, np.newaxis], **self.kwargs)
         else:
             self.model.X, self.model.Y = self.X, self.y[:, np.newaxis]
