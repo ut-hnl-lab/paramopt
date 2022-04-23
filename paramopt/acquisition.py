@@ -68,7 +68,7 @@ class Acquisition:
     def __init__(self, func: Callable) -> None:
         self.func = func
 
-    def get(
+    def __call__(
         self, mean: np.ndarray, std: np.ndarray, X: np.ndarray, y: np.ndarray
     ) -> None:
         if isinstance(self.func, UCB):
