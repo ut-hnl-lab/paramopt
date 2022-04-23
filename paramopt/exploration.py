@@ -2,7 +2,7 @@
 
 from itertools import product
 import os
-from typing import Any, Callable, Generator, Literal, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Generator, Literal, Optional, Tuple, Union
 
 import GPy.kern as gk
 import GPyOpt
@@ -35,7 +35,7 @@ class BaseLearner:
     """
     def __init__(self, savedir: str) -> None:
         self.savedir = savedir
-        self.pp = ProcessParameter()
+        self.params = ProcessParameter()
         self.y_name = 'y'
         self.tag_name = 'tag'
         self.X = np.empty((0, 0))
@@ -53,7 +53,20 @@ class BaseLearner:
         """
         array = np.array(space)
         self.X = np.hstack((self.X, np.empty((0, 1))))
-        self.pp.add(name, array)
+        self.params.add(name, array)
+
+    def add_parameter_from_dict(
+        self, dict_: Dict[str, Union[list, Generator]]
+    ) -> None:
+        """辞書形式でプロセスパラメータを追加する.
+
+        Parameters
+        ----------
+            dict_: Dict[str, Union[list, Generator]]
+                {"param1": [1, 2, 3, 4, 5]} の形式.
+        """
+        for key, values in dict_.items():
+            self.add_parameter(key, values)
 
     def prefit(self, csvpath: str = None) -> None:
         """既存のcsvデータを学習させ, 続きから学習を始める.
@@ -68,7 +81,7 @@ class BaseLearner:
         if length == 0:
             return
 
-        self.X = df[self.pp.names].values
+        self.X = df[self.params.names].values
         self.y = df[self.y_name].values
         self.tags = df[self.tag_name].fillna('').tolist()
         self._fit()
@@ -105,7 +118,7 @@ class BaseLearner:
         raise NotImplementedError
 
     def _save(self) -> None:
-        df = pd.DataFrame(self.X, columns=self.pp.names)
+        df = pd.DataFrame(self.X, columns=self.params.names)
         df[self.y_name] = self.y
         df[self.tag_name] = self.tags
 
@@ -138,15 +151,15 @@ class GPR(BaseLearner):
 
     def add_parameter(self, name: str, space: Union[list, Generator]) -> None:
         super().add_parameter(name, space)
-        self.X_combos = np.array(list(product(*self.pp.values)))
-        self.X_grid_combos = np.array(list(product(*self.pp.grids)))
+        self.X_combos = np.array(list(product(*self.params.values)))
+        self.X_grid_combos = np.array(list(product(*self.params.grids)))
 
     def next(self) -> Tuple[Any]:
         # 全てのパラメータの組み合わせに対する平均と分散を計算
         mean, std = self.model.predict(self.X_combos, return_std=True)
 
         # 獲得関数値を基に次のパラメータの組み合わせを選択
-        acq = self.acquisition.get(mean, std, self.X, self.y)
+        acq = self.acquisition(mean, std, self.X, self.y)
         next_idx = np.argmax(acq)  # 獲得関数を最大化するパラメータの組み合わせ
         next_X = tuple(self.X_combos[next_idx])
         return next_X
@@ -167,7 +180,7 @@ class GPR(BaseLearner):
         acq = self.acquisition.get(mean, std, self.X, self.y)
         plot.overwrite = overwrite
         plot.plot(
-            self.pp, self.X, self.y, mean, std, acq, objective_fn, self.y_name)
+            self.params, self.X, self.y, mean, std, acq, objective_fn, self.y_name)
         plot.savefig(os.path.join(self.savedir, f'plot-{self.tags[-1]}.png'))
 
     def _fit(self) -> None:
@@ -205,7 +218,7 @@ class GPyBO(BaseLearner):
         super().add_parameter(name, values)
         self.domain.append(
             {'name': name, 'type': 'discrete', 'domain': tuple(values)})
-        self.X_grid_combos = np.array(list(product(*self.pp.grids)))
+        self.X_grid_combos = np.array(list(product(*self.params.grids)))
 
     def next(self) -> Tuple[Any]:
         suggested_locations = self.model._compute_next_evaluations()
@@ -226,14 +239,14 @@ class GPyBO(BaseLearner):
         if gpystyle:
             self.model.plot_acquisition(
                 filename=os.path.join(self.savedir, f'{self.tags[-1]}.png'),
-                label_x = self.pp.names[0],
-                label_y = self.y_name if len(self.pp.names) < 2 else self.pp.names[1])
+                label_x = self.params.names[0],
+                label_y = self.y_name if len(self.params.names) < 2 else self.params.names[1])
         else:
             mean, std = self.model.model.model.predict(self.X_grid_combos)
             acq = -self.model.acquisition.acquisition_function(self.X_grid_combos)
             plot.overwrite = overwrite
             plot.plot(
-                self.pp, self.model.model.model.X, self.model.model.model.Y,
+                self.params, self.model.model.model.X, self.model.model.model.Y,
                 mean, std, acq, objective_fn=None)
             plot.savefig(os.path.join(self.savedir, f'plot-{self.tags[-1]}.png'))
 
