@@ -12,23 +12,6 @@ scikit-learn のガウス過程回帰をラップした, ベイズ最適化ラ�
 
 学習の中断・再開や, 学習中の様子のグラフ化,・保存・gif動画化もサポート.
 
-## Demo
-sin, cosで構成した関数にモデルをフィッティングさせる.
-
-［凡例］
-* グレーの線：目的関数. 通常はこの分布が不明なため, データ駆動的に調べる.
-* 黒点：入力したデータ. 赤星は最新の値.
-* 青線：データを学習した後のモデルの予測分布.
-* 赤線 or コンター図：獲得関数値.
-
-➀ 1次元パラメータの探索
-
-<img src="https://user-images.githubusercontent.com/88641432/163951938-5363d08b-15aa-436e-bccc-044dc771be80.gif" height=250>
-
-➁ 2次元パラメータの探索
-
-<img src="https://user-images.githubusercontent.com/88641432/163952263-5861449f-5057-49a8-96e4-8c8f7e735a7c.gif" height=300>
-
 ## Examples
 1次元のシンプルな探索を行う例.<br>
 詳しくは[examples](https://github.com/ut-hnl-lab/paramopt/tree/main/examples)を参照.
@@ -45,7 +28,7 @@ gpr = GPR(  # 1
 
 gpr.add_parameter(name='parameter', space=range(10))  # 2
 
-for i in range(10):
+for i in range(10):  # 6
     next_x, = gpr.next()  # 3
     y = [next_xパラメータで実験をした結果の評価値]  # 4
     gpr.fit(next_x, y, tag=i+1)  # 5
@@ -56,11 +39,35 @@ gif動画の生成.
 ```python
 from paramopt import select_images, create_gif
 
-paths = select_images
+paths = select_images()
 create_gif(paths)
 ```
+
+## Demo
+sin, cosで構成した関数にモデルをフィッティングさせる.
+
+［凡例］
+* グレーの線：目的関数. 通常はこの分布が不明なため, データ駆動的に調べる.
+* 黒点：入力したデータ. 赤星は最新の値.
+* 青線：データを学習した後のモデルの予測分布.
+* 赤線 or コンター図：獲得関数値.
+
+|1次元パラメータの探索|2次元パラメータの探索|
+|---|---|
+|<img src="https://user-images.githubusercontent.com/88641432/163951938-5363d08b-15aa-436e-bccc-044dc771be80.gif" height=250>|<img src="https://user-images.githubusercontent.com/88641432/163952263-5861449f-5057-49a8-96e4-8c8f7e735a7c.gif" height=300>|
 
 ## Installation
 ```
 pip install git+https://github.com/ut-hnl-lab/paramopt.git
 ```
+
+## Requirement
+* Python 3.6+
+* gpy
+* gpyopt
+* matplotlib
+* natsort
+* numpy
+* pandas
+* pillow
+* scikit-learn
