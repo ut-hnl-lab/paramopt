@@ -48,19 +48,15 @@ create_gif(paths)
 ## Demo
 Model fitting to a function composed of sin and cos.
 
-［凡例］
+\[Legend\]
 * Gray line: Objective function. Since this distribution is usually unknown, it is studied in a data-driven way.
 * Black dots: Input data. The red star means its latest data.
 * Blue line: Predicted distribution by the model after learning the data.
 * Red line(1D) or contour map(2D): Acquisition function values.
 
-➀ 1D parameter exploration
-
-<img src="https://user-images.githubusercontent.com/88641432/163951938-5363d08b-15aa-436e-bccc-044dc771be80.gif" height=250>
-
-➁ 2D parameter exploration
-
-<img src="https://user-images.githubusercontent.com/88641432/163952263-5861449f-5057-49a8-96e4-8c8f7e735a7c.gif" height=300>
+|1D parameter exploration|2D parameter exploration|
+|---|---|
+|<img src="https://user-images.githubusercontent.com/88641432/163951938-5363d08b-15aa-436e-bccc-044dc771be80.gif" height=250>|<img src="https://user-images.githubusercontent.com/88641432/163952263-5861449f-5057-49a8-96e4-8c8f7e735a7c.gif" height=300>|
 
 ## Installation
 ```

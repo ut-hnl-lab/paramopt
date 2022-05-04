@@ -54,13 +54,9 @@ sin, cosで構成した関数にモデルをフィッティングさせる.
 * 青線: データを学習した後のモデルの予測分布.
 * 赤線(1D) or コンター図(2D: 獲得関数値.
 
-➀ 1次元パラメータの探索
-
-<img src="https://user-images.githubusercontent.com/88641432/163951938-5363d08b-15aa-436e-bccc-044dc771be80.gif" height=250>
-
-➁ 2次元パラメータの探索
-
-<img src="https://user-images.githubusercontent.com/88641432/163952263-5861449f-5057-49a8-96e4-8c8f7e735a7c.gif" height=300>
+|1次元パラメータの探索|2次元パラメータの探索|
+|---|---|
+|<img src="https://user-images.githubusercontent.com/88641432/163951938-5363d08b-15aa-436e-bccc-044dc771be80.gif" height=250>|<img src="https://user-images.githubusercontent.com/88641432/163952263-5861449f-5057-49a8-96e4-8c8f7e735a7c.gif" height=300>|
 
 ## Installation
 ```
