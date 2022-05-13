@@ -12,7 +12,7 @@ import pandas as pd
 from sklearn.gaussian_process import GaussianProcessRegressor
 import sklearn.gaussian_process.kernels as sk
 
-from .acquisition import Acquisition
+from .acquisitions.base import BaseAcquisition
 from .parameter import ProcessParameter
 from . import utils
 from . import plot
@@ -139,13 +139,13 @@ class GPR(BaseLearner):
             再現性確保のために指定推奨.
     """
     def __init__(
-        self, savedir: str, kernel: sk.Kernel, acqfunc: Callable,
+        self, savedir: str, kernel: sk.Kernel, acqfunc: BaseAcquisition,
         random_seed: Optional[int] = None,
     ) -> None:
         super().__init__(savedir)
         self.model = GaussianProcessRegressor(
             kernel=kernel, n_restarts_optimizer=10, normalize_y=True)
-        self.acquisition = Acquisition(func=acqfunc)
+        self.acqfunc = acqfunc
         if random_seed is not None:
             self._fix_seed(random_seed)
 
@@ -159,7 +159,7 @@ class GPR(BaseLearner):
         mean, std = self.model.predict(self.X_combos, return_std=True)
 
         # 獲得関数値を基に次のパラメータの組み合わせを選択
-        acq = self.acquisition(mean, std, self.X, self.y)
+        acq = self.acqfunc.compute(mean, std, self.X, self.y)
         next_idx = np.argmax(acq)  # 獲得関数を最大化するパラメータの組み合わせ
         next_X = tuple(self.X_combos[next_idx])
         return next_X
@@ -177,7 +177,7 @@ class GPR(BaseLearner):
                 jupyter notebook使用時はFalseを推奨
         """
         mean, std = self.model.predict(self.X_grid_combos, return_std=True)
-        acq = self.acquisition.get(mean, std, self.X, self.y)
+        acq = self.acqfunc.best_idx(mean, std, self.X, self.y)
         plot.overwrite = overwrite
         plot.plot(
             self.params, self.X, self.y, mean, std, acq, objective_fn, self.y_name)
@@ -203,11 +203,10 @@ class GPyBO(BaseLearner):
     """
     def __init__(
         self, savedir: str, acqfunc: Literal['EI', 'EI_MCMC', 'MPI', 'MPI_MCMC',
-        'UCB', 'UCB_MCMC', 'UCB', 'UCB_MCMC'],
-        random_seed: Optional[int] = None, **kwargs: Any
+        'LCB', 'LCB_MCMC'], random_seed: Optional[int] = None, **kwargs: Any
     ) -> None:
         super().__init__(savedir)
-        self.acquisition = Acquisition(func=acqfunc)
+        self.acqfunc = acqfunc
         self.kwargs = kwargs
         self.model = None
         self.domain = []
@@ -243,7 +242,7 @@ class GPyBO(BaseLearner):
                 label_y = self.y_name if len(self.params.names) < 2 else self.params.names[1])
         else:
             mean, std = self.model.model.model.predict(self.X_grid_combos)
-            acq = -self.model.acquisition.acquisition_function(self.X_grid_combos)
+            acq = -self.model.acqfunc.acquisition_function(self.X_grid_combos)
             plot.overwrite = overwrite
             plot.plot(
                 self.params, self.model.model.model.X, self.model.model.model.Y,
@@ -253,7 +252,7 @@ class GPyBO(BaseLearner):
     def _fit(self) -> None:
         if self.model is None:
             self.model = GPyOpt.methods.BayesianOptimization(
-                f=None, domain=self.domain, acquisition_type=self.acquisition,
+                f=None, domain=self.domain, acquisition_type=self.acqfunc,
                 X=self.X, Y=self.y[:, np.newaxis], **self.kwargs)
         else:
             self.model.X, self.model.Y = self.X, self.y[:, np.newaxis]
