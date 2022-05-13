@@ -1,2 +1,3 @@
+*.test.py
 *.egg-info/
 paramopt/__pycache__/
