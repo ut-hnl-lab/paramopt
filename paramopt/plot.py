@@ -17,15 +17,15 @@ def plot(pp: ProcessParameter, X: np.ndarray, y: np.ndarray,
     acq: Optional[np.ndarray] = None, objective_fn: Optional[Callable] = None,
     y_name: str = 'y'
 ) -> None:
-    dim = pp.dim
+    ndim = pp.ndim
 
-    if dim == 1:
+    if ndim == 1:
         plot_1d(
             pp.grids[0], X, y, mean, std, acq, objective_fn, pp.names[0], y_name)
-    elif dim == 2:
+    elif ndim == 2:
         plot_2d(pp.grids, X, y, mean, acq, objective_fn, pp.names, y_name)
     else:
-        raise NotImplementedError(f'{dim}D plot not supported')
+        raise NotImplementedError(f'{ndim}D plot not supported')
 
 
 def plot_1d(
