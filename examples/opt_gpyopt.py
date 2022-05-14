@@ -6,9 +6,9 @@ from utils import f1, f2, search_1d, search_2d
 
 def gpybo1d_ucb():
     bo = BayesianOptimizer(
-        savedir='test_gpybo1d-ucb',
+        savedir='test_gpybo1d-lcb',
         kernel=RBF(input_dim=1, variance=1, lengthscale=0.5) * Bias(input_dim=1, variance=1),
-        acqfunc='UCB',
+        acqfunc='LCB',
         acquisition_weight=2,
         random_seed=71)
     search_1d(bo, f1)
@@ -27,9 +27,9 @@ def gpybo1d_ei():
 
 def gpybo2d_ucb():
     bo = BayesianOptimizer(
-        savedir='test_gpybo2d-ucb',
+        savedir='test_gpybo2d-lcb',
         kernel=RBF(input_dim=2, variance=1, lengthscale=5.0) * Bias(input_dim=2, variance=1),
-        acqfunc='UCB',
+        acqfunc='LCB',
         acquisition_weight=2,
         random_seed=71)
     search_2d(bo, f2)
