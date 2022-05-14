@@ -34,8 +34,8 @@ bo.add_parameter(name='parameter', space=range(10))  # 2
 for i in range(10):  # 6
     next_x, = bo.next()  # 3
     y = {The score of the experimental result with "next_x" parameters}  # 4
-    bo.fit(next_x, y, tag=i+1)  # 5
-    bo.graph()
+    bo.fit(next_x, y, label=i+1)  # 5
+    bo.plot()
 ```
 
 Creation of a GIF animation.
