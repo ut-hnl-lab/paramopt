@@ -1,11 +1,19 @@
 from typing import Callable
 import numpy as np
 
-from paramopt import BaseLearner
+from paramopt.optimizers import BaseOptimizer
+
+
+def f1(x):
+    return x * np.sin(x)
+
+
+def f2(x1, x2):
+    return (x1 * np.sin(x1*0.05+np.pi) + x2 * np.cos(x2*0.05)) * 0.1
 
 
 def search_1d(
-    gpr: BaseLearner, f: Callable, prefix: str = '', noisy: bool = True
+    gpr: BaseOptimizer, f: Callable, prefix: str = '', noisy: bool = True
 ) -> None:
     gpr.add_parameter('param', np.arange(0, 10.5, 0.5))
     gpr.fit(0, f(0), tag=prefix+str(0))
@@ -23,7 +31,7 @@ def search_1d(
 
 
 def search_2d(
-    gpr: BaseLearner, f: Callable, prefix: str = '', noisy: bool = True
+    gpr: BaseOptimizer, f: Callable, prefix: str = '', noisy: bool = True
 ) -> None:
     gpr.add_parameter('param1', np.arange(180, 285, 5))
     gpr.add_parameter('param2', np.arange(10, 220, 10))
