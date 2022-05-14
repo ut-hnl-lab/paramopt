@@ -33,6 +33,7 @@ class BaseOptimizer:
         self.params = ProcessParameter()
         self.y_name = 'y'
         self.label_name = 'label'
+        self.csv_name = 'exploration_history.csv'
         self.X = None
         self.y = np.empty(0)
         self.labels = []
@@ -132,4 +133,4 @@ class BaseOptimizer:
         df[self.label_name] = self.labels
 
         os.makedirs(self.savedir, exist_ok=True)
-        df.to_csv(os.path.join(self.savedir, 'search_history.csv'), index=False)
+        df.to_csv(os.path.join(self.savedir, self.csv_name), index=False)
