@@ -44,7 +44,7 @@ class BayesianOptimizer(BaseOptimizer):
         mean, std = self.model.predict(self.X_combos, return_std=True)
 
         # 獲得関数値を基に次のパラメータの組み合わせを選択
-        acq = self.acqfunc.compute(mean, std, self.X, self.y)
+        acq = self.acqfunc(mean, std, self.X, self.y)
         next_idx = np.argmax(acq)  # 獲得関数を最大化するパラメータの組み合わせ
         next_X = tuple(self.X_combos[next_idx])
         return next_X
@@ -62,7 +62,7 @@ class BayesianOptimizer(BaseOptimizer):
                 jupyter notebook使用時はFalseを推奨
         """
         mean, std = self.model.predict(self.X_grid_combos, return_std=True)
-        acq = self.acqfunc.best_idx(mean, std, self.X, self.y)
+        acq = self.acqfunc(mean, std, self.X, self.y)
         plot.overwrite = overwrite
         plot.plot(
             self.params, self.X, self.y, mean, std, acq, objective_fn, self.y_name)

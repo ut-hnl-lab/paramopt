@@ -14,7 +14,7 @@ class EI(BaseAcquisition):
     def __init__(self, xi: float = 0.0) -> None:
         self.xi = xi
 
-    def compute(
+    def __call__(
         self, mean: np.ndarray, std: np.ndarray, X: np.ndarray, y: np.ndarray
     ) -> np.ndarray:
         """

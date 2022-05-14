@@ -14,7 +14,7 @@ class UCB(BaseAcquisition):
     def __init__(self, c: float) -> None:
         self.c = c
 
-    def compute(
+    def __call__(
         self, mean: np.ndarray, std: np.ndarray, X: np.ndarray, y: np.ndarray
     ) -> np.ndarray:
         """

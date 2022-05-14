@@ -4,7 +4,7 @@ import numpy as np
 class BaseAcquisition:
     """獲得関数の基底クラス. 継承してcomputeメソッドに計算を記述する."""
 
-    def compute(
+    def __call__(
         self, mean: np.ndarray, std: np.ndarray, X: np.ndarray, y: np.ndarray
     ) -> np.ndarray:
         """獲得関数値を計算する.
