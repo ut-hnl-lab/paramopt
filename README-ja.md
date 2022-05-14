@@ -20,21 +20,22 @@ scikit-learn のガウス過程回帰をラップした, ベイズ最適化ラ�
 
 ```python
 from sklearn.gaussian_process.kernels import *
-from paramopt import GPR, UCB
+from paramopt.acquisitions import UCB
+from paramopt.optimizers.sklearn import BayesianOptimizer
 
-gpr = GPR(  # 1
+bo = BayesianOptimizer(  # 1
     savedir='tests',
     kernel=RBF(length_scale=0.5) * ConstantKernel() + WhiteKernel(),
     acqfunc=UCB(c=2.0),
     random_seed=71)
 
-gpr.add_parameter(name='parameter', space=range(10))  # 2
+bo.add_parameter(name='parameter', space=range(10))  # 2
 
 for i in range(10):  # 6
-    next_x, = gpr.next()  # 3
-    y = [next_xパラメータで実験をした結果の評価値]  # 4
-    gpr.fit(next_x, y, tag=i+1)  # 5
-    gpr.graph()
+    next_x, = bo.next()  # 3
+    y = {The score of the experimental result with "next_x" parameters}  # 4
+    bo.fit(next_x, y, tag=i+1)  # 5
+    bo.graph()
 ```
 
 gif動画の生成.
@@ -65,11 +66,13 @@ pip install git+https://github.com/ut-hnl-lab/paramopt.git
 
 ## Requirement
 * Python 3.6+
-* gpy
-* gpyopt
-* matplotlib
-* natsort
 * numpy
 * pandas
 * pillow
 * scikit-learn
+* matplotlib
+
+\[Optional\]
+* gpy
+* gpyopt
+* natsort
