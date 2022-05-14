@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from decimal import Decimal
 from typing import List, Union
 
 import numpy as np
@@ -11,9 +10,9 @@ class ProcessParameter:
         self._data: List['ParamData'] = []
 
     def add(self, name: str, values: np.ndarray) -> None:
-        vmax, vmin = Decimal(np.max(values)), Decimal(np.min(values))
-        step = Decimal((vmax-vmin)/self.n_grid_split)
-        grid = list(map(float, np.arange(vmin, vmax+step, step)))
+        vmax, vmin = np.max(values), np.min(values)
+        step = (vmax-vmin)/self.n_grid_split
+        grid = np.arange(vmin, vmax+step, step)
         self._data.append(ParamData(name, values, grid))
 
     @property
