@@ -7,15 +7,13 @@ import warnings
 import numpy as np
 import pandas as pd
 
+from .exceptions import *
 from ..parameter import ProcessParameter
 from .. import utils
 
 
-warnings.filterwarnings('ignore')
-
-
 class BaseOptimizer:
-    """ベースとなる学習クラス.
+    """ベースとなる最適化クラス.
 
     プロセスパラメータとその組み合わせの管理, 追加したデータの蓄積, 学習履歴の保存,
     学習経過のグラフ出力をサポートする. 継承は任意.
@@ -25,13 +23,19 @@ class BaseOptimizer:
         savedir: 学習履歴を書き出すディレクトリ
     """
     def __init__(self, savedir: str) -> None:
+        if os.path.isdir(savedir):
+            warnings.warn(
+                f'{savedir} already exists.'
+                +' The contents with the same name will be replaced!',
+                UserWarning)
+
         self.savedir = savedir
         self.params = ProcessParameter()
         self.y_name = 'y'
-        self.tag_name = 'tag'
-        self.X = np.empty((0, 0))
+        self.label_name = 'label'
+        self.X = None
         self.y = np.empty(0)
-        self.tags = []
+        self.labels = []
         self.fig = None
 
     def add_parameter(self, name: str, space: Union[list, Generator]) -> None:
@@ -40,11 +44,14 @@ class BaseOptimizer:
         Parameters
         ----------
             name: パラメータ名
-            values: パラメタが取り得る値のリストもしくは範囲のジェネレータ(range等)
+            space: パラメタが取り得る値のリストもしくは範囲のジェネレータ(range等)
         """
-        array = np.array(space)
-        self.X = np.hstack((self.X, np.empty((0, 1))))
-        self.params.add(name, array)
+        if self.y.shape[0] > 0:
+            raise ParameterError(
+                'Process parameters cannot be added after exploration started')
+
+        self.params.add(name, np.array(space))
+        self.X = np.empty((0, self.params.ndim))
 
     def add_parameter_from_dict(
         self, dict_: Dict[str, Union[list, Generator]]
@@ -66,32 +73,39 @@ class BaseOptimizer:
         ----------
             csvpath: 学習履歴のcsvパス
         """
+        if self.y.shape[0] > 0:
+            raise FittingError(
+                'Existing dataset cannot be fitted after exploration started')
+
         df = pd.read_csv(csvpath).dropna(subset=[self.y_name])
         length = len(df)
-
         if length == 0:
             return
 
         self.X = df[self.params.names].values
         self.y = df[self.y_name].values
-        self.tags = df[self.tag_name].fillna('').tolist()
+        self.labels = df[self.label_name].fillna('').tolist()
         self._fit()
 
-    def fit(self, X: Any, y: Any, tag: Optional[Any] = None) -> None:
+    def fit(self, X: Any, y: Any, label: Optional[Any] = None) -> None:
         """モデルに新しいデータを学習させる.
 
         Parameters
         ----------
             X: 実験に用いたプロセスパラメータの組み合わせ
             y: 実験したときの中間データの測定値
-            tag: csvで保存する際に付け加えるタグ
+            label: csvで保存する際に付け加えるラベル
                 デフォルトは日時.
         """
+        if self.X is None:
+            raise ParameterError(
+                'At least one process parameter must be added before fitting')
+
         self.X = np.vstack((self.X, X))
         self.y = np.append(self.y, y)
-        if tag is None:
-            tag = utils.formatted_now()
-        self.tags.append(tag)
+        if label is None:
+            label = utils.formatted_now()
+        self.labels.append(label)
 
         self._fit()
         self._save()
@@ -105,7 +119,7 @@ class BaseOptimizer:
         """
         raise NotImplementedError
 
-    def graph(self, *args, **kwargs) -> None:
+    def plot(self, *args, **kwargs) -> None:
         """学習の経過をグラフ化する."""
         raise NotImplementedError
 
@@ -115,7 +129,7 @@ class BaseOptimizer:
     def _save(self) -> None:
         df = pd.DataFrame(self.X, columns=self.params.names)
         df[self.y_name] = self.y
-        df[self.tag_name] = self.tags
+        df[self.label_name] = self.labels
 
         os.makedirs(self.savedir, exist_ok=True)
         df.to_csv(os.path.join(self.savedir, 'search_history.csv'), index=False)
