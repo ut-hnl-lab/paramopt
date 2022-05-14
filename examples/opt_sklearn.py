@@ -1,48 +1,48 @@
 from sklearn.gaussian_process.kernels import *
 
-from paramopt import GPR, UCB, EI
-from .function import *
-from .optimizer import *
+from paramopt.optimizers.sklearn import BayesianOptimizer
+from paramopt.acquisitions import UCB, EI
+from utils import f1, f2, search_1d, search_2d
 
 
-def gpr1d_ucb():
-    gpr = GPR(
-        savedir='test_gpr1d-ucb',
+def slbo1d_ucb():
+    bo = BayesianOptimizer(
+        savedir='test_slbo1d-ucb',
         kernel=RBF(length_scale=0.5) * ConstantKernel() + WhiteKernel(),
         acqfunc=UCB(c=2.0),
         random_seed=71)
-    search_1d(gpr, f1)
+    search_1d(bo, f1)
 
 
-def gpr1d_ei():
-    gpr = GPR(
-        savedir='test_gpr1d-ei',
+def slbo1d_ei():
+    bo = BayesianOptimizer(
+        savedir='test_slbo1d-ei',
         kernel=RBF(length_scale=0.5) * ConstantKernel() + WhiteKernel(),
         acqfunc=EI(xi=0.0),
         random_seed=71)
-    search_1d(gpr, f1)
+    search_1d(bo, f1)
 
 
-def gpr2d_ucb():
-    gpr = GPR(
-        savedir='test_gpr2d-ucb',
+def slbo2d_ucb():
+    bo = BayesianOptimizer(
+        savedir='test_slbo2d-ucb',
         kernel=RBF(length_scale=5.0) * ConstantKernel() + WhiteKernel(),
         acqfunc=UCB(c=2.0),
         random_seed=71)
-    search_2d(gpr, f2)
+    search_2d(bo, f2)
 
 
-def gpr2d_ei():
-    gpr = GPR(
-        savedir='test_gpr2d-ei',
+def slbo2d_ei():
+    bo = BayesianOptimizer(
+        savedir='test_slbo2d-ei',
         kernel=RBF(length_scale=5.0) * ConstantKernel() + WhiteKernel(),
         acqfunc=EI(xi=0.0),
         random_seed=71)
-    search_2d(gpr, f2)
+    search_2d(bo, f2)
 
 
 if __name__ == '__main__':
-    gpr1d_ucb()
-    gpr1d_ei()
-    gpr2d_ucb()
-    gpr2d_ei()
+    slbo1d_ucb()
+    slbo1d_ei()
+    slbo2d_ucb()
+    slbo2d_ei()
