@@ -42,7 +42,7 @@ class BayesianOptimizer(BaseOptimizer):
         next_X = tuple(suggested_locations[0])
         return next_X
 
-    def graph(
+    def plot(
         self, overwrite: bool = False, gpystyle: bool = False, **kwargs: Any
     ) -> None:
         """学習の経過をグラフ化する.
@@ -55,7 +55,7 @@ class BayesianOptimizer(BaseOptimizer):
         """
         if gpystyle:
             self.model.plot_acquisition(
-                filename=os.path.join(self.savedir, f'{self.tags[-1]}.png'),
+                filename=os.path.join(self.savedir, f'{self.labels[-1]}.png'),
                 label_x = self.params.names[0],
                 label_y = self.y_name if len(self.params.names) < 2 else self.params.names[1])
         else:
@@ -65,7 +65,7 @@ class BayesianOptimizer(BaseOptimizer):
             plot.plot(
                 self.params, self.model.model.model.X, self.model.model.model.Y,
                 mean, std, acq, objective_fn=None)
-            plot.savefig(os.path.join(self.savedir, f'plot-{self.tags[-1]}.png'))
+            plot.savefig(os.path.join(self.savedir, f'plot-{self.labels[-1]}.png'))
 
     def _fit(self) -> None:
         if self.model is None:

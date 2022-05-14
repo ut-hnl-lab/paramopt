@@ -49,7 +49,7 @@ class BayesianOptimizer(BaseOptimizer):
         next_X = tuple(self.X_combos[next_idx])
         return next_X
 
-    def graph(
+    def plot(
         self, objective_fn: Optional[Callable] = None, overwrite: bool = False,
     ) -> None:
         """学習の経過をグラフ化する.
@@ -66,7 +66,7 @@ class BayesianOptimizer(BaseOptimizer):
         plot.overwrite = overwrite
         plot.plot(
             self.params, self.X, self.y, mean, std, acq, objective_fn, self.y_name)
-        plot.savefig(os.path.join(self.savedir, f'plot-{self.tags[-1]}.png'))
+        plot.savefig(os.path.join(self.savedir, f'plot-{self.labels[-1]}.png'))
 
     def _fit(self) -> None:
         self.model.fit(self.X, self.y)
