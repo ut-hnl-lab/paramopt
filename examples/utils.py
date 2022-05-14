@@ -19,7 +19,7 @@ def search_1d(
     gpr.fit(0, f(0), tag=prefix+str(0))
     gpr.fit(1, f(1), tag=prefix+str(0))
     gpr.fit(10, f(10), tag=prefix+str(0))
-    gpr.graph(objective_fn=f)
+    gpr.graph(objective_fn=f, overwrite=True)
 
     for i in range(10):
         next_x, = gpr.next()
@@ -27,7 +27,7 @@ def search_1d(
         if noisy:
             y += np.random.normal(scale=0.1)
         gpr.fit(next_x, y, tag=prefix+str(i+1))
-        gpr.graph(objective_fn=f)
+        gpr.graph(objective_fn=f, overwrite=True)
 
 
 def search_2d(
@@ -40,7 +40,7 @@ def search_2d(
     gpr.fit((180, 210), f(180, 210), tag=prefix+str(0))
     gpr.fit((280, 10), f(280, 10), tag=prefix+str(0))
     gpr.fit((280, 210), f(280, 210), tag=prefix+str(0))
-    gpr.graph(objective_fn=f)
+    gpr.graph(objective_fn=f, overwrite=True)
 
     for i in range(15):
         next_x = gpr.next()
@@ -48,4 +48,4 @@ def search_2d(
         if noisy:
             y += np.random.normal(scale=1.0)
         gpr.fit(next_x, y, tag=prefix+str(i+1))
-        gpr.graph(objective_fn=f)
+        gpr.graph(objective_fn=f, overwrite=True)
