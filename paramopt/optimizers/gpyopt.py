@@ -60,7 +60,7 @@ class BayesianOptimizer(BaseOptimizer):
                 label_y = self.y_name if len(self.params.names) < 2 else self.params.names[1])
         else:
             mean, std = self.model.model.model.predict(self.X_grid_combos)
-            acq = -self.model.acqfunc.acquisition_function(self.X_grid_combos)
+            acq = -self.model.acquisition.acquisition_function(self.X_grid_combos)
             plot.overwrite = overwrite
             plot.plot(
                 self.params, self.model.model.model.X, self.model.model.model.Y,
