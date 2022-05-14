@@ -1,20 +1,40 @@
+from dataclasses import dataclass
+from decimal import Decimal
+from typing import List, Union
+
 import numpy as np
 
 
 class ProcessParameter:
     def __init__(self) -> None:
         self.n_grid_split = 100
-        self.names = []
-        self.values = []
-        self.grids = []
+        self._data: List['ParamData'] = []
 
     def add(self, name: str, values: np.ndarray) -> None:
-        self.names.append(name)
-        self.values.append(values)
-        vmax, vmin = np.max(values), np.min(values)
-        step = (vmax-vmin)/self.n_grid_split
-        self.grids.append(np.arange(vmin, vmax+step, step))
+        vmax, vmin = Decimal(np.max(values)), Decimal(np.min(values))
+        step = Decimal((vmax-vmin)/self.n_grid_split)
+        grid = list(map(float, np.arange(vmin, vmax+step, step)))
+        self._data.append(ParamData(name, values, grid))
 
     @property
-    def dim(self):
-        return len(self.values)
+    def ndim(self) -> int:
+        return len(self._data)
+
+    @property
+    def names(self) -> List[str]:
+        return [d.name for d in self._data]
+
+    @property
+    def values(self) -> List[List[Union[int, float]]]:
+        return [d.values for d in self._data]
+
+    @property
+    def grids(self) -> List[List[Union[int, float]]]:
+        return [d.grid for d in self._data]
+
+
+@dataclass
+class ParamData:
+    name: str
+    values: List[Union[int, float]]
+    grid: List[Union[int, float]]
