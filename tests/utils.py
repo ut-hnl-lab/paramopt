@@ -5,11 +5,11 @@ from paramopt.optimizers import BaseOptimizer
 
 
 def f1(x):
-    return x * np.sin(x)
+    return x * np.sin(x) + 10
 
 
 def f2(x1, x2):
-    return (x1 * np.sin(x1*0.05+np.pi) + x2 * np.cos(x2*0.05)) * 0.1
+    return (x1 * np.sin(x1*0.05+np.pi) + x2 * np.cos(x2*0.05)) * 0.1 + 10
 
 
 def search_1d(
