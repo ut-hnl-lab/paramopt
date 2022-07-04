@@ -1,14 +1,18 @@
 """プロセスパラメータ空間を探索し, 値を逐次的に更新するプログラム."""
 
-import os
-from typing import Any, Dict, Generator, Optional, Union
+from pathlib import Path
+from typing import Any, Callable, Dict, Generator, Optional, Tuple, Union
 import warnings
 
 import numpy as np
-import pandas as pd
+
+from ..graphs.distribution import Distribution
+from ..graphs.transition import Transition
 
 from .exceptions import *
-from ..parameter import ProcessParameter
+from ..acquisitions.base import BaseAcquisition
+from ..structures.parameter import ExplorationSpace
+from ..structures.dataset import Dataset
 from .. import utils
 
 
@@ -20,75 +24,42 @@ class BaseOptimizer:
 
     Parameters
     ----------
-        savedir: 学習履歴を書き出すディレクトリ
+        workdir: 学習履歴を書き出すディレクトリ
     """
-    def __init__(self, savedir: str) -> None:
-        if os.path.isdir(savedir):
+    def __init__(
+        self,
+        workdir: Union[Path, str],
+        exploration_space: 'ExplorationSpace',
+        dataset: 'Dataset',
+        acquisition: 'BaseAcquisition',
+        objective_fn: Optional[Callable] = None
+    ) -> None:
+        if len(exploration_space.names) != len(dataset.X_names):
+            raise ValueError(
+                f"exploration space length ({len(exploration_space.names)}) does",
+                f" not match observation names ({len(dataset.X_names)})")
+        if exploration_space.names != dataset.X_names:
             warnings.warn(
-                f'{savedir} already exists.'
-                +' The contents with the same name will be replaced!',
+                f"exploration space names ({exploration_space.names}) does not",
+                f" match observation names ({dataset.X_names})",
+                UserWarning)
+        self.workdir = Path(workdir)
+        if self.workdir.exists():
+            warnings.warn(
+                f"'{workdir}' already exists. The contents may be replaced!",
                 UserWarning)
 
-        self.savedir = savedir
-        self.params = ProcessParameter()
-        self.y_name = 'y'
-        self.label_name = 'label'
-        self.csv_name = 'exploration_history.csv'
-        self.X = None
-        self.y = np.empty(0)
-        self.labels = []
-        self.fig = None
+        self.exploration_space = exploration_space
+        self.dataset = dataset
+        self.acquisition = acquisition
+        self.objective_fn = objective_fn
+        self.distribution = Distribution()
+        self.transition = Transition()
 
-    def add_parameter(self, name: str, space: Union[list, Generator]) -> None:
-        """プロセスパラメータを追加する.
+        self.exploration_space.to_json(self.workdir)
+        self.dataset.to_csv(self.workdir)
 
-        Parameters
-        ----------
-            name: パラメータ名
-            space: パラメタが取り得る値のリストもしくは範囲のジェネレータ(range等)
-        """
-        if self.y.shape[0] > 0:
-            raise ParameterError(
-                'Process parameters cannot be added after exploration started')
-
-        self.params.add(name, np.array(space))
-        self.X = np.empty((0, self.params.ndim))
-
-    def add_parameter_from_dict(
-        self, dict_: Dict[str, Union[list, Generator]]
-    ) -> None:
-        """辞書形式でプロセスパラメータを追加する.
-
-        Parameters
-        ----------
-            dict_: Dict[str, Union[list, Generator]]
-                {"param1": [1, 2, 3, 4, 5]} の形式.
-        """
-        for key, values in dict_.items():
-            self.add_parameter(key, values)
-
-    def prefit(self, csvpath: str = None) -> None:
-        """既存のcsvデータを学習させ, 続きから学習を始める.
-
-        Parameters
-        ----------
-            csvpath: 学習履歴のcsvパス
-        """
-        if self.y.shape[0] > 0:
-            raise FittingError(
-                'Existing dataset cannot be fitted after exploration started')
-
-        df = pd.read_csv(csvpath).dropna(subset=[self.y_name])
-        length = len(df)
-        if length == 0:
-            return
-
-        self.X = df[self.params.names].values
-        self.y = df[self.y_name].values
-        self.labels = df[self.label_name].fillna('').tolist()
-        self._fit()
-
-    def fit(self, X: Any, y: Any, label: Optional[Any] = None) -> None:
+    def update(self, X: Any, y: Any, label: Optional[Any] = None) -> None:
         """モデルに新しいデータを学習させる.
 
         Parameters
@@ -98,39 +69,51 @@ class BaseOptimizer:
             label: csvで保存する際に付け加えるラベル
                 デフォルトは日時.
         """
-        if self.X is None:
-            raise ParameterError(
-                'At least one process parameter must be added before fitting')
+        dataset_added = self.dataset.add(
+            X, y, label if label is not None else utils.formatted_now())
+        self._fit_to_model(dataset_added.X, dataset_added.Y)
+        dataset_added.to_csv(self.workdir)
+        self.dataset = dataset_added
 
-        self.X = np.vstack((self.X, X))
-        self.y = np.append(self.y, y)
-        if label is None:
-            label = utils.formatted_now()
-        self.labels.append(label)
-
-        self._fit()
-        self._save()
-
-    def next(self) -> Any:
+    def suggest(self) -> Tuple[Any, ...]:
         """次の探索パラメータを決定し取得する.
 
         Returns
         -------
             次のパラメータの組み合わせ
         """
+        param_conbinations = self.exploration_space.conbinations()
+        mean, std = self._predict_with_model(param_conbinations)
+        acq = self.acquisition(mean, std, self.dataset.X, self.dataset.Y)
+        return tuple(param_conbinations[np.argmax(acq)])
+
+    def plot(self) -> None:
+        """学習の経過をグラフ化する.
+
+        Parameters
+        ----------
+            objective_fn: 目的関数
+                真の関数が分かっている場合(=テスト時)に指定すると, 共に描画.
+            overwrite: 1つのウィンドウに対してグラフを上書き更新するか否か
+                jupyter notebook使用時はFalseを推奨
+        """
+        param_conbinations = self.exploration_space.grid_conbinations()
+        mean, std = self._predict_with_model(param_conbinations)
+        acq = self.acquisition(mean, std, self.dataset.X, self.dataset.Y)
+
+        if self.exploration_space.dimension <= 2:
+            self.distribution.plot(
+                self.exploration_space, self.dataset, mean, std, acq,
+                self.objective_fn)
+            self.distribution.show()
+            self.distribution.to_png(self.workdir, self.dataset.last_label)
+
+        self.transition.plot(self.exploration_space, self.dataset)
+        self.transition.show()
+        self.transition.to_png(self.workdir, self.dataset.last_label)
+
+    def _fit_to_model(self, X: np.ndarray, Y: np.ndarray) -> None:
         raise NotImplementedError
 
-    def plot(self, *args, **kwargs) -> None:
-        """学習の経過をグラフ化する."""
+    def _predict_with_model(self, X: np.ndarray) -> Tuple[np.ndarray, ...]:
         raise NotImplementedError
-
-    def _fit(self) -> None:
-        raise NotImplementedError
-
-    def _save(self) -> None:
-        df = pd.DataFrame(self.X, columns=self.params.names)
-        df[self.y_name] = self.y
-        df[self.label_name] = self.labels
-
-        os.makedirs(self.savedir, exist_ok=True)
-        df.to_csv(os.path.join(self.savedir, self.csv_name), index=False)
