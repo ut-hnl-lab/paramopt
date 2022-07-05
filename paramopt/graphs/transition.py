@@ -1,13 +1,13 @@
-from typing import Any, Callable, List, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple
+
 import matplotlib.pyplot as plt
 from matplotlib.colors import TABLEAU_COLORS
 from matplotlib.figure import Figure
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 
-from paramopt.structures.dataset import Dataset
-
 from .base import BaseGraph
+from ..structures.dataset import Dataset
 from ..structures.parameter import ExplorationSpace
 
 
@@ -16,7 +16,9 @@ MARKERS = ["o", "s", "^", "D", "v", "*"]
 
 
 class Transition(BaseGraph):
-
+    """Class for visualizing transitions of process parameters and objective
+    core.
+    """
     PNG_PREFIX = "trans-"
 
     def __init__(self) -> None:
@@ -24,11 +26,20 @@ class Transition(BaseGraph):
 
     def plot(
         self,
-        exploration_space: "ExplorationSpace",
-        dataset: "Dataset",
+        exploration_space: 'ExplorationSpace',
+        dataset: 'Dataset',
         *args: Any,
         **kwargs: Any
     ) -> None:
+        """Plots the transition of the values of the selected parameters and
+        objective score.
+
+        No limitation on the parameter dimension.
+        If given, valiable-length arguments are used to setup
+        `matplotlib.pyplot.figure`.
+        """
+        super().plot()
+
         if exploration_space.dimension != dataset.dimension_X:
             raise ValueError(
                 "exploration dimension does not match dataset dimension")
@@ -53,26 +64,29 @@ def _plot_transition(
     Y_names: List[str],
     Y_bounds: Optional[Tuple[int]] = None
 ) -> Figure:
-    scaler = MinMaxScaler()
+    """Plot function for X, Y transition."""
     ax_left = fig.add_subplot()
     ax_right = ax_left.twinx()
 
     X = np.atleast_2d(X)
     Y = np.atleast_2d(Y)
 
+    fitted_scaler = MinMaxScaler().fit(np.atleast_2d(X_spaces).T)
+    scaled_X = fitted_scaler.transform(X)
+
 
     for i in range(Y.shape[1]):
-        ax_left.plot(Y, f'-{MARKERS[i]}', label=Y_names[i], color=COLORS[i])
+        mi, ci = int(i%len(MARKERS)), int(i%len(COLORS))
+        ax_left.plot(
+            Y[:, i], f'-{MARKERS[mi]}', label=Y_names[i], color=COLORS[ci])
     for j in range(X.shape[1]):
-        X_space = X_spaces[j].reshape(-1, 1)
-        fitted_scaler = scaler.fit(X_space)
-        scaled_X = fitted_scaler.transform(X[:, j:j+1])
+        mj, cj = int((i+j+1)%len(MARKERS)), int((i+j+1)%len(COLORS))
         ax_right.plot(
-            scaled_X, MARKERS[i+j+1], label=X_names[j], color=COLORS[i+j+1])
+            scaled_X[:, j], MARKERS[mj], label=X_names[j], color=COLORS[cj])
 
     ax_left.set_xlabel("Iteration Number")
     ax_left.set_ylabel("Objective Score")
-    ax_right.set_ylabel("Parameter Value (normalized)")
+    ax_right.set_ylabel("Parameter Value (normalized)", labelpad=10)
     hl, ll = ax_left.get_legend_handles_labels()
     hr, lr = ax_right.get_legend_handles_labels()
     ax_left.legend(
