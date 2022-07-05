@@ -1,10 +1,11 @@
 from itertools import product
+
 from matplotlib import pyplot as plt
+import numpy as np
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
-from paramopt.acquisitions.ucb import UCB
-import numpy as np
 
+from paramopt.acquisitions.ucb import UCB
 from paramopt.graphs.distribution import _plot_process_1d, _plot_process_2d
 from paramopt.graphs.transition import _plot_transition
 

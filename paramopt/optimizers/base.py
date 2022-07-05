@@ -1,30 +1,22 @@
-"""プロセスパラメータ空間を探索し, 値を逐次的に更新するプログラム."""
-
 from pathlib import Path
-from typing import Any, Callable, Dict, Generator, Optional, Tuple, Union
+from typing import Any, Callable, Optional, Tuple, Union
 import warnings
 
 import numpy as np
 
+from ..acquisitions.base import BaseAcquisition
 from ..graphs.distribution import Distribution
 from ..graphs.transition import Transition
-
-from .exceptions import *
-from ..acquisitions.base import BaseAcquisition
 from ..structures.parameter import ExplorationSpace
 from ..structures.dataset import Dataset
 from .. import utils
 
 
 class BaseOptimizer:
-    """ベースとなる最適化クラス.
+    """Base optimizer class.
 
-    プロセスパラメータとその組み合わせの管理, 追加したデータの蓄積, 学習履歴の保存,
-    学習経過のグラフ出力をサポートする. 継承は任意.
-
-    Parameters
-    ----------
-        workdir: 学習履歴を書き出すディレクトリ
+    It is expected to inherit this class and override
+    the `_fit_to_model()` and `_predict_with_model()` methods.
     """
     def __init__(
         self,
@@ -59,15 +51,21 @@ class BaseOptimizer:
         self.exploration_space.to_json(self.workdir)
         self.dataset.to_csv(self.workdir)
 
-    def update(self, X: Any, y: Any, label: Optional[Any] = None) -> None:
-        """モデルに新しいデータを学習させる.
+    def update(self, X: Any, y: Any, label: Optional[str] = None) -> None:
+        """Update dataset and model with new X and corresponding y.
+
+        The dataset csv file is also updated.
 
         Parameters
         ----------
-            X: 実験に用いたプロセスパラメータの組み合わせ
-            y: 実験したときの中間データの測定値
-            label: csvで保存する際に付け加えるラベル
-                デフォルトは日時.
+        X: Any
+            Numeric value or array.
+        y: Any
+            Numeric value or array. This is usually acquired by real
+            experiments.
+        label: str, optional
+            The label assigned to the data.
+            If the label is set to 'None', current time is used instead.
         """
         dataset_added = self.dataset.add(
             X, y, label if label is not None else utils.formatted_now())
@@ -76,11 +74,13 @@ class BaseOptimizer:
         self.dataset = dataset_added
 
     def suggest(self) -> Tuple[Any, ...]:
-        """次の探索パラメータを決定し取得する.
+        """Determine the next combination of parameters based on gpr predictions
+        and given acquisition function.
 
         Returns
         -------
-            次のパラメータの組み合わせ
+        tuple
+            Parameter conbination.
         """
         param_conbinations = self.exploration_space.conbinations()
         mean, std = self._predict_with_model(param_conbinations)
@@ -88,14 +88,10 @@ class BaseOptimizer:
         return tuple(param_conbinations[np.argmax(acq)])
 
     def plot(self) -> None:
-        """学習の経過をグラフ化する.
+        """Visualize the distributions of dataset and gpr predictions, and the
+        transition of parameter values and the objective score.
 
-        Parameters
-        ----------
-            objective_fn: 目的関数
-                真の関数が分かっている場合(=テスト時)に指定すると, 共に描画.
-            overwrite: 1つのウィンドウに対してグラフを上書き更新するか否か
-                jupyter notebook使用時はFalseを推奨
+        The output graphs are also saved as png file.
         """
         param_conbinations = self.exploration_space.grid_conbinations()
         mean, std = self._predict_with_model(param_conbinations)
@@ -113,7 +109,9 @@ class BaseOptimizer:
         self.transition.to_png(self.workdir, self.dataset.last_label)
 
     def _fit_to_model(self, X: np.ndarray, Y: np.ndarray) -> None:
+        """Train the model using the entire dataset."""
         raise NotImplementedError
 
     def _predict_with_model(self, X: np.ndarray) -> Tuple[np.ndarray, ...]:
+        """Predict data distribution with the trained model."""
         raise NotImplementedError

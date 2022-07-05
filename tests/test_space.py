@@ -1,8 +1,11 @@
+from itertools import product
 from pathlib import Path
+
 import numpy as np
 import pytest
-from paramopt.structures.parameter import ExplorationSpace, ProcessParameter
-from itertools import product
+
+from paramopt.structures import ExplorationSpace, ProcessParameter
+
 
 # 1次元空間格納
 def test_add_1d():

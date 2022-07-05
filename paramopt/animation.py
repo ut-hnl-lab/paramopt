@@ -12,7 +12,7 @@ def create_gif(
 
     Parameters
     ----------
-    file_paths : List[str]
+    file_paths : list of strs
         List of image paths
     duration : float, optional
         Time interval between frames [s], by default 1.0.
@@ -36,7 +36,7 @@ def select_images() -> List[str]:
 
     Returns
     -------
-    List[str]
+    list of str
         List of image paths
     """
     from tkinter import filedialog, Tk
@@ -48,7 +48,7 @@ def select_images() -> List[str]:
     Tk().withdraw()
     file_paths = filedialog.askopenfilenames(
         filetypes=[
-            ('PNGファイル', '*.png'), ('JPEGファイル', '*.jpg')], initialdir='.')
+            ('PNG files', '*.png'), ('JPEG files', '*.jpg')], initialdir='.')
     return file_paths
 
 

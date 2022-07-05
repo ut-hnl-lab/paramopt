@@ -2,22 +2,35 @@ import numpy as np
 
 
 class BaseAcquisition:
-    """獲得関数の基底クラス. 継承してcomputeメソッドに計算を記述する."""
+    """Base class for acquisition function classes.
+
+    Inherit this class and
+    write calculation in overrided `__call__()` method to create a new one.
+    """
 
     def __call__(
-        self, mean: np.ndarray, std: np.ndarray, X: np.ndarray, y: np.ndarray
+        self,
+        mean: np.ndarray,
+        std: np.ndarray,
+        X: np.ndarray,
+        y: np.ndarray
     ) -> np.ndarray:
-        """獲得関数値を計算する.
+        """Calculate acquisition
 
         Parameters
         ----------
-        mean : 平均
-        std : 標準偏差
-        X : 今までのパラメータ組合せ
-        y : 今までの計測値
+        mean : numpy.ndarray
+            Predicted mean.
+        std : numpy.ndarray
+            Predicted standard deviation.
+        X : numpy.ndarray
+            X of known datasets.
+        y : numpy.ndarray
+            y of known datasets.
 
         Returns
         -------
-        獲得関数値
+        numpy.ndarray
+            Acquisition.
         """
         raise NotImplementedError

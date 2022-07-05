@@ -1,5 +1,5 @@
-import numpy as np
 import pytest
+
 from paramopt.structures.parameter import ProcessParameter
 
 

@@ -1,7 +1,8 @@
-# X:1次元，Y:1次元
 from pathlib import Path
+
 import numpy as np
 import pytest
+
 from paramopt.structures.dataset import Dataset
 
 

@@ -1,22 +1,22 @@
-from typing import Any, Callable, List, Optional, Union
+from typing import Any, Callable, List, Optional
+
 from matplotlib import cm, gridspec, pyplot as plt
 from matplotlib.figure import Figure
 import numpy as np
 
-from paramopt.structures.dataset import Dataset
 from .base import BaseGraph
-
+from ..structures.dataset import Dataset
 from ..structures.parameter import ExplorationSpace
 
 
 class Distribution(BaseGraph):
-
+    """Class for visualizing GPR fitting process."""
     PNG_PREFIX = "dist-"
 
     def plot(
         self,
-        exploration_space: "ExplorationSpace",
-        dataset: "Dataset",
+        exploration_space: 'ExplorationSpace',
+        dataset: 'Dataset',
         mean: Optional[np.ndarray] = None,
         std: Optional[np.ndarray] = None,
         acquisition: Optional[np.ndarray] = None,
@@ -24,6 +24,15 @@ class Distribution(BaseGraph):
         *args: Any,
         **kwargs: Any
     ) -> None:
+        """Plots the distribution of the dataset, the predicted mean and
+        standard deviation, and the acquisition.
+
+        This supports up to 2D space.
+        If given, valiable-length arguments is used to setup
+        `matplotlib.pyplot.figure`.
+        """
+        super().plot()
+
         if exploration_space.dimension != dataset.dimension_X:
             raise ValueError(
                 "exploration dimension does not match dataset dimension")
@@ -69,6 +78,7 @@ def _plot_process_1d(
     X_name: str = "x",
     Y_name: str = "y"
 ) -> Figure:
+    """Plot function for 1D parameter space."""
     if acquisition is not None:
         spec = gridspec.GridSpec(ncols=1, nrows=2, height_ratios=[3, 1])
         ax_upper = fig.add_subplot(spec[0])
@@ -112,6 +122,7 @@ def _plot_process_2d(
     X_names: List[str] = ["x1", "x2"],
     Y_name: str = "y"
 ) -> Figure:
+    """Plot function for 2D parameter space."""
     Xmeshes = np.meshgrid(X_grids[0], X_grids[1])
     ax = fig.add_subplot(projection="3d")
 

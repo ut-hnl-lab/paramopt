@@ -1,11 +1,10 @@
 from pathlib import Path
-from typing import Callable
 import numpy as np
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import *
+
 from paramopt.acquisitions.ucb import UCB
 from paramopt.extensions.hpadjust import AutoHPGPR
-
 from paramopt.optimizers import BaseOptimizer
 from paramopt.optimizers.sklearn import BayesianOptimizer
 from paramopt.structures.dataset import Dataset

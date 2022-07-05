@@ -1,28 +1,46 @@
-from dataclasses import asdict, dataclass, field
 from inspect import signature
-from pathlib import Path
-from typing import Any, Callable, ClassVar, Dict, List, Optional, Tuple, Union
-import warnings
-import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd
-from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RBF, ConstantKernel, WhiteKernel
-from scipy.stats import mode
-
 from itertools import product
+from pathlib import Path
+from typing import Any, Callable, Dict, Union
+import warnings
 
-from paramopt.structures.parameter import ExplorationSpace
+import numpy as np
+import pandas as pd
+from scipy.stats import mode
+from sklearn.gaussian_process import GaussianProcessRegressor
+
+from ..structures.parameter import ExplorationSpace
 
 
 def fitting_score(mean: np.ndarray) -> float:
+    """Evaluates how reasonable the given prediction is."""
     modal_value = mode(np.round(mean.flatten(), 1))
     score = 1 - modal_value.count[0] / mean.size
     return score
 
 
 class AutoHPGPR:
+    """A GPR model that can automatically adjust hyperparameter for each fitting.
 
+    Parameters
+    ----------
+    workdir : pathlib.Path or str
+        Working directory where csv files are output.
+    exploration_space : paramopt.ExplorationSpace
+        An exploration space definition.
+    gpr_generator : Callable
+        A function that generates gpr model. This should receive hyperparameters.
+    **hparams: Any
+        Hyperparameter spaces. When `gpr_generator` takes arguments named `a`
+        and `b`, this keyword argument takes list of their possible values like
+        `a=[1,2,3], b=[4,5]`
+
+    Raises
+    ------
+    ValueError
+        Raises when the number of `gpr_generator` arguments does not match the
+        number of hyperparameter spaces.
+    """
     MIN_FITTING_SCORE = 0.8
 
     def __init__(
@@ -33,7 +51,7 @@ class AutoHPGPR:
         **hparams: Any
     ) -> None:
         if signature(gpr_generator).parameters.keys() != hparams.keys():
-            raise ValueError("gpr_generator arguments does not match **hparams")
+            raise ValueError("gpr_generator arguments does not match hparams")
 
         self.workdir = workdir
         self.space_grid = exploration_space.grid_conbinations()
@@ -84,7 +102,7 @@ class AutoHPGPR:
 
 
 class HPHistory:
-
+    """Accumulates and exports the history of given values with given names."""
     EXPORT_NAME = "hp_history.csv"
 
     def __init__(self, *names) -> None:

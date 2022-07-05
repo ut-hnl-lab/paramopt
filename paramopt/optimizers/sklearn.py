@@ -1,4 +1,5 @@
-from typing import Any, Callable, Generator, Optional, Tuple, Union
+from pathlib import Path
+from typing import Callable, Optional, Tuple, Union
 
 import numpy as np
 from sklearn.gaussian_process import GaussianProcessRegressor
@@ -10,20 +11,33 @@ from ..structures.dataset import Dataset
 
 
 class BayesianOptimizer(BaseOptimizer):
-    """sklearnガウス過程回帰モデルベースのベイジアンオプティマイザ.
+    """Bayesian optimizer based on
+    `sklearn.gaussian_process.GaussianProcessRegressor`.
+
+    This class read and write raw data via `Dataset` class, and explore
+    parameter space defined by `ExplorationSpace` class, using sklearn gpr model
+    and acquisition class that inherits `BaseAcquisition` class.
 
     Parameters
     ----------
-        workdir: 学習履歴を書き出すディレクトリ
-        kernel: GPRのカーネル
-        acquisition: 獲得関数
-            acquisition(mean, std)形式で計算.
-        random_seed: 乱数シード
-            再現性確保のために指定推奨.
+    workdir: pathlib.Path or str
+        Working directory where csv and png files are output.
+    exploration_space: ExplorationSpace
+        Definition of the exploration space.
+    dataset: Dataset
+        Dataset used for training input and prediction output.
+    model: sklearn.gaussian_process.GaussianProcessRegressor
+        scikit-learn gpr model.
+    acquisition: Acquisition
+        Acquisition function implemented as a acquisition class.
+    objective_fn: Callable
+        Objective function that represents true distribution.
+    random_seed: int, optional
+        Random seed.
     """
     def __init__(
         self,
-        workdir: str,
+        workdir: Union[Path, str],
         exploration_space: 'ExplorationSpace',
         dataset: 'Dataset',
         model: 'GaussianProcessRegressor',
@@ -38,7 +52,7 @@ class BayesianOptimizer(BaseOptimizer):
         self.random_seed = random_seed
 
         if random_seed is not None:
-            self.fix_random_state()
+            self._fix_random_state()
 
     def _fit_to_model(self, X: np.ndarray, Y: np.ndarray) -> None:
         self.model.fit(X, Y)
@@ -47,6 +61,6 @@ class BayesianOptimizer(BaseOptimizer):
         mean, std = self.model.predict(X, return_std=True)
         return (mean, std)
 
-    def fix_random_state(self) -> None:
+    def _fix_random_state(self) -> None:
         np.random.seed(self.random_seed)
         self.model.random_state = self.random_seed

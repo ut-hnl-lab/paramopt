@@ -1,5 +1,3 @@
-"""ユーティリティ関数群."""
-
 from datetime import datetime
 
 
