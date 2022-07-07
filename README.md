@@ -1,5 +1,9 @@
-<h1 align="center"> Param Opt </h1>
-<h3 align="center">Param Opt helps the researcher quickly and easily explore optimal experimental parameters.</h3>
+<div align="center">
+<h1> Param Opt </h1>
+<h4>Param Opt helps the researcher quickly and easily explore optimal experimental parameters.</h4>
+
+<img src="https://img.shields.io/badge/version-1.0.0-green"> <img src="https://img.shields.io/github/license/ut-hnl-lab/paramopt?color=yellow"> <img src="https://img.shields.io/badge/python-3.6%2B-blue">
+</div>
 
 ## Table of Contents
 * [Overview](#overview)
@@ -15,6 +19,9 @@
 * [License](#license)
 
 ## Overview
+
+<img src=https://user-images.githubusercontent.com/88641432/177723799-e628ba9a-97f9-4bf0-8110-62b7319860d4.png>
+
 Bayesian optimization is used for adjusting process parameters (= experimental parameters), such as instrument settings, chemical formulation rates, hyperparameters for machine learning models, and more.
 
 **Param Opt** is a useful python package that is responsible for not only bayesian model training and prediction, but also reading and writing data and visualizing the optimization process.
@@ -37,6 +44,9 @@ The following packages are also required:
 Here is an example of optimizing a combination of two parameters.
 
 ### Defining Target Parameters
+
+<img src=https://user-images.githubusercontent.com/88641432/177726927-ca4f8f7c-3f78-4585-b0f5-da198d4179b8.png width="50%">
+
 Define parameters to be adjusted.
 ```python
 from paramopt.structures import ProcessParameter, ExplorationSpace
@@ -52,6 +62,9 @@ space = ExplorationSpace([param1, param2])
 ```
 
 ### Creating Dataset
+
+<img src=https://user-images.githubusercontent.com/88641432/177725196-2f3043e4-31be-4939-ba48-c276f503246c.png width="45%">
+
 Create a dataset consisting of an explanatory variables with `X_names` and objective variables with `Y_names`.
 ```python
 from paramopt.structures import Dataset
@@ -107,7 +120,12 @@ for i in range(15):
 ## Other Useful Features
 
 ### GPR with Hyperparameter Auto-adjustment Ability
+
+<img src=https://user-images.githubusercontent.com/88641432/177728148-57ed7d52-07ec-4c5c-af1c-81afb7440860.png width="65%">
+
 Sometimes GPR does not predict well like this:
+
+<img src=https://user-images.githubusercontent.com/88641432/177728843-dea8cacb-60e5-4fbb-adf1-edeb894ccdde.png width="40%">
 
 In this case, let's replace it with a model that automatically adjusts the hyperparameters.
 
@@ -128,6 +146,8 @@ model = AutoHPGPR(
 
 The result is
 
+<img src=https://user-images.githubusercontent.com/88641432/177729186-7dfe1249-8a2c-4ce7-9ec8-393e2b682970.png width="40%">
+
 ### GIF Creation from Plot pngs
 Create a GIF movie from the obtained plot images
 
@@ -135,6 +155,8 @@ Create a GIF movie from the obtained plot images
 paths = select_images()  # Opens a GUI dialog
 create_gif(paths)
 ```
+<img src="https://user-images.githubusercontent.com/88641432/177729552-23194201-8241-4c3f-b814-68e5bd69b4bb.PNG" width="40%"><img src=https://user-images.githubusercontent.com/88641432/177729289-6ab150dd-c487-488f-bb82-d52e94fb77e9.gif width="40%">
+
 
 # License
 MIT license.
