@@ -71,18 +71,17 @@ def _plot_transition(
     X = np.atleast_2d(X)
     Y = np.atleast_2d(Y)
 
-    fitted_scaler = MinMaxScaler().fit(np.atleast_2d(X_spaces).T)
-    scaled_X = fitted_scaler.transform(X)
-
-
     for i in range(Y.shape[1]):
         mi, ci = int(i%len(MARKERS)), int(i%len(COLORS))
         ax_left.plot(
             Y[:, i], f'-{MARKERS[mi]}', label=Y_names[i], color=COLORS[ci])
     for j in range(X.shape[1]):
+        X_vec = X[:, j:j+1]
+        scaler = MinMaxScaler().fit(np.atleast_2d(X_spaces[j]).T)
+        scaled_X_vec = scaler.transform(X_vec)
         mj, cj = int((i+j+1)%len(MARKERS)), int((i+j+1)%len(COLORS))
         ax_right.plot(
-            scaled_X[:, j], MARKERS[mj], label=X_names[j], color=COLORS[cj])
+            scaled_X_vec, MARKERS[mj], label=X_names[j], color=COLORS[cj])
 
     ax_left.set_xlabel("Iteration Number")
     ax_left.set_ylabel("Objective Score")
