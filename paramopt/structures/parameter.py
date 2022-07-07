@@ -2,7 +2,6 @@ from dataclasses import dataclass, asdict, field
 import json
 from pathlib import Path
 from typing import List, ClassVar, Union
-from attr import s
 
 from dacite import from_dict
 import numpy as np
