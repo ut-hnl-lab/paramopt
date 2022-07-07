@@ -1,1 +1,1 @@
-from .hpadjust import AutoHPGPR, HPHistory
+from .hpadjust import AutoHPGPR
