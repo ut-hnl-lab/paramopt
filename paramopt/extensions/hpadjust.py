@@ -57,7 +57,8 @@ class AutoHPGPR:
         self.space_grid = exploration_space.grid_conbinations()
         self.gpr_generator = gpr_generator
         self.hparams = hparams
-        self.best_gpr = None
+        self.best_gpr = gpr_generator(
+            **{key: vals[0] for key, vals in hparams.items()})
 
         self.hp_history = HPHistory(*hparams.keys(), "score")
 
