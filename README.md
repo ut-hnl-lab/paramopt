@@ -39,8 +39,10 @@ Here is an example of optimizing a combination of two parameters.
 ### Defining Target Parameters
 Define parameters to be adjusted.
 ```python
-param1 = ProcessParameter(name="Heating Temperature", values=[200, 240, 280])
-param2 = ProcessParameter(name="Heating Time", values=[30, 60, 120, 240])
+from paramopt.structures import ProcessParameter, ExplorationSpace
+
+param1 = ProcessParameter(name="Heating Temperature", values=[150, 180, 210, 230, 250])
+param2 = ProcessParameter(name="Heating Time", values=[10, 20, 40, 80, 150, 220])
 ```
 `name` is the parameter name and `values` is a list of possible values of the parameter.
 
@@ -52,6 +54,8 @@ space = ExplorationSpace([param1, param2])
 ### Creating Dataset
 Create a dataset consisting of an explanatory variables with `X_names` and objective variables with `Y_names`.
 ```python
+from paramopt.structures import Dataset
+
 dataset = Dataset(X_names=space.names, Y_names="Evaluation")
 ```
 Basically, X_names is passed the parameter namew, and Y_names is passed the name of the evaluations.
@@ -59,12 +63,14 @@ Basically, X_names is passed the parameter namew, and Y_names is passed the name
 The dataset is managed by the `BayesianOptimizer` class described below.
 
 ### Preparing GPR Model and Acquisition Function
-Use `sklearn.gaussian_process.GaussianProcessRegressor` for the GPR model.
+Use `sklearn.gaussian_process` for the GPR model.
 Acquisition functions are provided in this package.
 ```python
-model = GaussianProcessRegressor(
-        kernel=RBF()*ConstantKernel()+WhiteKernel(),
-        normalize_y=True)
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import *
+from paramopt.acquisitions import UCB
+
+model = GaussianProcessRegressor(kernel=RBF(10), normalize_y=True)
 acquisition = UCB(1.0)
 ```
 
@@ -73,18 +79,21 @@ Let's optimize parameters in the bayesian optimization loop.
 Here is a function that simulates an experiment and returns an evaluation value for a given parameter combination.
 ```python
 def experiment(x1, x2):
-    return x1*np.sin(x1) + x2*np.cos(x2)
+    return x1*np.sin(x1*0.05+np.pi) + x2*np.cos(x2*0.05)
 ```
 
 The optimization flow is as follows:
 ```python
+from pathlib import Path
+from paramopt.optimizers.sklearn import BayesianOptimizer
+
 # Define optimizer
 bo = BayesianOptimizer(
-    workdir=here, exploration_space=space, dataset=dataset, model=model,
+    workdir=Path.cwd(), exploration_space=space, dataset=dataset, model=model,
     acquisition=acquisition, objective_fn=experiment, random_seed=71)
 
 # For max iterations:
-for i in range(10):
+for i in range(15):
     # Get better combination of parameters
     next_x = bo.suggest()
     # Get evaluation score with experiments
@@ -103,6 +112,8 @@ Sometimes GPR does not predict well like this:
 In this case, let's replace it with a model that automatically adjusts the hyperparameters.
 
 ```python
+from paramopt.extensions import AutoHPGPR
+
 def gpr_generator(exp, nro):
     return GaussianProcessRegressor(
         kernel=RBF(length_scale_bounds=(10**-exp, 10**exp)) \
@@ -111,7 +122,7 @@ def gpr_generator(exp, nro):
         normalize_y=True, n_restarts_optimizer=nro)
 
 model = AutoHPGPR(
-    workdir=here, exploration_space=space, gpr_generator=gpr_generator,
+    workdir=Path.cwd(), exploration_space=space, gpr_generator=gpr_generator,
     exp=list(range(1, 6)), nro=list(range(0, 10)))
 ```
 
