@@ -1,78 +1,129 @@
-【[日本語](https://github.com/ut-hnl-lab/paramopt/blob/main/README-ja.md)】
+<h1 align="center"> Param Opt </h1>
+<h3 align="center">Param Opt helps the researcher quickly and easily explore optimal experimental parameters.</h3>
 
-# ParamOpt
-A library for Bayesian optimization, which wraps scikit-learn's Gaussian process regression. (GpyOpt is also available, but is deprecated since it is no longer supported.)
+## Table of Contents
+* [Overview](#overview)
+* [Preparation](#preparation)
+* [Quick Start](#quick-start)
+    * [Defining Target Parameters](#defining-target-parameters)
+    * [Creating Dataset](#creating-dataset)
+    * [Preparing GPR Model and Acquisition Function](#preparing-gpr-model-and-acquisition-function)
+    * [Optimizing Parameters](#optimizing-parameters)
+* [Other Useful Features](#other-useful-features)
+    * [GPR with Hyperparameter Auto-adjustment Ability](#gpr-with-hyperparameter-auto-adjustment-ability)
+    * [GIF Creation from Plot pngs](#gif-creation-from-plot-pngs)
+* [License](#license)
 
-## Description
-You can optimize process parameters by using Gaussian process regression model. The procedure is as follows:
-1. Instantiate the model specifying arguments such as kernel.
-2. Register process parameters.
-3. Get the next parameters.
-4. Experiment with the obtained parameters and score the results.
-5. Train the model with the score.
-6. Repeat 3-5.
+## Overview
+Bayesian optimization is used for adjusting process parameters (= experimental parameters), such as instrument settings, chemical formulation rates, hyperparameters for machine learning models, and more.
 
-This library also supports pausing and resuming learning, graphing, saving, and creating gif movies of the learning process..
+**Param Opt** is a useful python package that is responsible for not only bayesian model training and prediction, but also reading and writing data and visualizing the optimization process.
 
-## Examples
-Example of a simple 1D exploration.<br>
-See [examples](https://github.com/ut-hnl-lab/paramopt/tree/main/examples) for more details.
-
-```python
-from sklearn.gaussian_process.kernels import *
-from paramopt.acquisitions import UCB
-from paramopt.optimizers.sklearn import BayesianOptimizer
-
-bo = BayesianOptimizer(  # 1
-    savedir='tests',
-    kernel=RBF(length_scale=0.5) * ConstantKernel() + WhiteKernel(),
-    acqfunc=UCB(c=2.0),
-    random_seed=71)
-
-bo.add_parameter(name='parameter', space=range(10))  # 2
-
-for i in range(10):  # 6
-    next_x, = bo.next()  # 3
-    y = {The score of the experimental result with "next_x" parameters}  # 4
-    bo.fit(next_x, y, label=i+1)  # 5
-    bo.plot()
-```
-
-Creation of a GIF animation.
-```python
-from paramopt import select_images, create_gif
-
-paths = select_images()
-create_gif(paths)
-```
-
-## Demo
-Model fitting to a function composed of sin and cos.
-
-\[Legend\]
-* Gray line: Objective function. Since this distribution is usually unknown, it is studied in a data-driven way.
-* Black dots: Input data. The red star means its latest data.
-* Blue line: Predicted distribution by the model after learning the data.
-* Red line(1D) or contour map(2D): Acquisition function values.
-
-|1D parameter exploration|2D parameter exploration|
-|---|---|
-|<img src="https://user-images.githubusercontent.com/88641432/163951938-5363d08b-15aa-436e-bccc-044dc771be80.gif" height=250>|<img src="https://user-images.githubusercontent.com/88641432/163952263-5861449f-5057-49a8-96e4-8c8f7e735a7c.gif" height=300>|
-
-## Installation
+## Preparation
+Install Param Opt via pip:
 ```
 pip install git+https://github.com/ut-hnl-lab/paramopt.git
 ```
+The following packages are also required:
+* Matplotlib
+* Natsort
+* Numpy
+* Pandas
+* Pillow
+* Scipy
+* Scikit-learn
 
-## Requirement
-* Python 3.6+
-* numpy
-* pandas
-* pillow
-* scikit-learn
-* matplotlib
+## Quick Start
+Here is an example of optimizing a combination of two parameters.
 
-\[Optional\]
-* gpy
-* gpyopt
-* natsort
+### Defining Target Parameters
+Define parameters to be adjusted.
+```python
+param1 = ProcessParameter(name="Heating Temperature", values=[200, 240, 280])
+param2 = ProcessParameter(name="Heating Time", values=[30, 60, 120, 240])
+```
+`name` is the parameter name and `values` is a list of possible values of the parameter.
+
+Then, define a exploration space consisting of the parameters.
+```python
+space = ExplorationSpace([param1, param2])
+```
+
+### Creating Dataset
+Create a dataset consisting of an explanatory variables with `X_names` and objective variables with `Y_names`.
+```python
+dataset = Dataset(X_names=space.names, Y_names="Evaluation")
+```
+Basically, X_names is passed the parameter namew, and Y_names is passed the name of the evaluations.
+
+The dataset is managed by the `BayesianOptimizer` class described below.
+
+### Preparing GPR Model and Acquisition Function
+Use `sklearn.gaussian_process.GaussianProcessRegressor` for the GPR model.
+Acquisition functions are provided in this package.
+```python
+model = GaussianProcessRegressor(
+        kernel=RBF()*ConstantKernel()+WhiteKernel(),
+        normalize_y=True)
+acquisition = UCB(1.0)
+```
+
+### Optimizing Parameters
+Let's optimize parameters in the bayesian optimization loop.
+Here is a function that simulates an experiment and returns an evaluation value for a given parameter combination.
+```python
+def experiment(x1, x2):
+    return x1*np.sin(x1) + x2*np.cos(x2)
+```
+
+The optimization flow is as follows:
+```python
+# Define optimizer
+bo = BayesianOptimizer(
+    workdir=here, exploration_space=space, dataset=dataset, model=model,
+    acquisition=acquisition, objective_fn=experiment, random_seed=71)
+
+# For max iterations:
+for i in range(10):
+    # Get better combination of parameters
+    next_x = bo.suggest()
+    # Get evaluation score with experiments
+    y = experiment(*next_x)
+    # Update optimizer
+    bo.update(next_x, y, label=f"#{i+1}")
+    # Check process with some plots
+    bo.plot()
+```
+
+## Other Useful Features
+
+### GPR with Hyperparameter Auto-adjustment Ability
+Sometimes GPR does not predict well like this:
+
+In this case, let's replace it with a model that automatically adjusts the hyperparameters.
+
+```python
+def gpr_generator(exp, nro):
+    return GaussianProcessRegressor(
+        kernel=RBF(length_scale_bounds=(10**-exp, 10**exp)) \
+                * ConstantKernel() \
+                + WhiteKernel(),
+        normalize_y=True, n_restarts_optimizer=nro)
+
+model = AutoHPGPR(
+    workdir=here, exploration_space=space, gpr_generator=gpr_generator,
+    exp=list(range(1, 6)), nro=list(range(0, 10)))
+```
+
+The result is
+
+### GIF Creation from Plot pngs
+Create a GIF movie from the obtained plot images
+
+```python
+paths = select_images()  # Opens a GUI dialog
+create_gif(paths)
+```
+
+# License
+MIT license.
