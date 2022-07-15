@@ -56,7 +56,7 @@ class Dataset:
             raise ValueError(
                 f"Y_names length ({n_Y}) does not match Y length ({n_Y_names})")
 
-        self.__label_name = label_name
+        self.label_name = label_name
         self.__labels = labels if labels is not None else []
 
     @property
@@ -66,6 +66,10 @@ class Dataset:
     @property
     def Y(self) -> np.ndarray:
         return self.__Y
+
+    @property
+    def labels(self) -> List[Any]:
+        return self.__labels
 
     @property
     def dimension_X(self) -> int:
@@ -81,7 +85,7 @@ class Dataset:
             raise ValueError("no data added")
         return self.__labels[-1]
 
-    def add(self, X: Any, Y: Any, label: Optional[str] = None) -> 'Dataset':
+    def add(self, X: Any, Y: Any, label: Any = "") -> 'Dataset':
         """Add new data with a label.
 
         Parameters
@@ -90,9 +94,8 @@ class Dataset:
             Numeric value or array.
         Y : Any
             Numeric value or array.
-        label: str, optional
+        label: Any, default to ""
             The label assigned to the data.
-            If the label is set to 'None', current time is used instead.
 
         Returns
         -------
@@ -102,21 +105,30 @@ class Dataset:
         Raises
         ------
         ValueError
-            Raises when trying to add two or more pieces of data at once.
+            Raises when the number of X, Y, and label is different.
         """
         X_adding = np.atleast_2d(X)
         Y_adding = np.atleast_2d(Y)
+        n_X, n_Y = X_adding.shape[0], Y_adding.shape[0]
 
-        if X_adding.shape[0] != 1 or Y_adding.shape[0] != 1:
-            raise ValueError("input arrays must be 1-dimensional")
+        if n_X != n_Y:
+            raise ValueError(
+                f"length of X ({n_X}) does not match length of Y ({n_Y})")
+
+        label_adding = [label for _ in range(n_X)] \
+            if not isinstance(label, (list, tuple)) else label
+        n_label = len(label_adding)
+
+        if n_label != n_X:
+            raise ValueError(
+                f"number of label ({n_label}) does not match" \
+                + f" length of array ({n_X})")
 
         X = np.vstack((self.__X, X_adding))
         Y = np.vstack((self.__Y, Y_adding))
-        labels = self.__labels \
-                 + [label if label is not None else utils.formatted_now()]
+        labels = self.__labels + label_adding
 
-        return Dataset(
-            self.X_names, self.Y_names, self.__label_name, X, Y, labels)
+        return Dataset(self.X_names, self.Y_names, self.label_name, X, Y, labels)
 
     @staticmethod
     def from_csv(
@@ -172,7 +184,7 @@ class Dataset:
         """
         X_df = pd.DataFrame(self.__X, columns=self.X_names)
         Y_df = pd.DataFrame(self.__Y, columns=self.Y_names)
-        label_df = pd.DataFrame(self.__labels, columns=[self.__label_name])
+        label_df = pd.DataFrame(self.__labels, columns=[self.label_name])
         concated = pd.concat([X_df, Y_df, label_df], axis=1)
 
         directory_ = Path(directory)

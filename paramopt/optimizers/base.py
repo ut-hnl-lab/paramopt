@@ -51,7 +51,7 @@ class BaseOptimizer:
         self.exploration_space.to_json(self.workdir)
         self.dataset.to_csv(self.workdir)
 
-    def update(self, X: Any, y: Any, label: Optional[str] = None) -> None:
+    def update(self, X: Any, Y: Any, label: Optional[Any] = None) -> None:
         """Update dataset and model with new X and corresponding y.
 
         The dataset csv file is also updated.
@@ -60,15 +60,15 @@ class BaseOptimizer:
         ----------
         X: Any
             Numeric value or array.
-        y: Any
+        Y: Any
             Numeric value or array. This is usually acquired by real
             experiments.
-        label: str, optional
+        label: Any, optional
             The label assigned to the data.
             If the label is set to 'None', current time is used instead.
         """
         dataset_added = self.dataset.add(
-            X, y, label if label is not None else utils.formatted_now())
+            X, Y, label if label is not None else utils.formatted_now())
         self._fit_to_model(dataset_added.X, dataset_added.Y)
         dataset_added.to_csv(self.workdir)
         self.dataset = dataset_added

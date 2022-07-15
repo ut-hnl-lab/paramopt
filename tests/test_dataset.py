@@ -86,3 +86,14 @@ def test_add_invalid_len():
     d = Dataset(["X1", "X2"], ["Y1", "Y2"])
     with pytest.raises(ValueError):
         d.add([1], [2,3])
+
+
+# 複数データの追加
+def test_add_multidata():
+    d1 = Dataset(["X1", "X2"], "Y1", X=[0,0], Y=[0], labels=["init"])
+    d2 = d1.add([[1,2], [-1,-2]], [[3], [4]])
+    assert d2.labels == ["init", "", ""]
+    d3 = d1.add([[1,2], [-1,-2]], [[3], [4]], ["a", "b"])
+    assert d3.labels == ["init", "a", "b"]
+    with pytest.raises(ValueError):
+        d1.add([[1,2], [-1,-2]], [[3], [4]], ["a"])
