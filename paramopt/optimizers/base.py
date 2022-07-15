@@ -12,6 +12,10 @@ from ..structures.dataset import Dataset
 from .. import utils
 
 
+def _map_to_builtin_types(np_array: np.ndarray) -> Tuple[Any, ...]:
+    return tuple(val.item() for val in np_array)
+
+
 class BaseOptimizer:
     """Base optimizer class.
 
@@ -83,30 +87,41 @@ class BaseOptimizer:
             Parameter conbination.
         """
         param_conbinations = self.exploration_space.conbinations()
-        mean, std = self._predict_with_model(param_conbinations)
+        mean_, std_ = self._predict_with_model(param_conbinations)
+        mean, std = mean_.reshape(-1, 1), std_.reshape(-1, 1)
         acq = self.acquisition(mean, std, self.dataset.X, self.dataset.Y)
-        return tuple(param_conbinations[np.argmax(acq)])
+        next_combination = param_conbinations[np.argmax(acq)]
+        return _map_to_builtin_types(next_combination)
 
-    def plot(self) -> None:
-        """Visualize the distributions of dataset and gpr predictions, and the
-        transition of parameter values and the objective score.
+    def plot(self, display: bool = False) -> None:
+        """Plot the distributions of dataset and gpr predictions, and the
+        transition of parameter values and the objective score. The plots are
+        saved as png files.
 
-        The output graphs are also saved as png file.
+        Parameters
+        ----------
+        display: bool, default to `False`
+            If `True`, the plots are displayed on separated windows.
         """
         param_conbinations = self.exploration_space.grid_conbinations()
-        mean, std = self._predict_with_model(param_conbinations)
+        mean_, std_ = self._predict_with_model(param_conbinations)
+        mean, std = mean_.reshape(-1, 1), std_.reshape(-1, 1)
         acq = self.acquisition(mean, std, self.dataset.X, self.dataset.Y)
 
-        if self.exploration_space.dimension <= 2:
-            self.distribution.plot(
-                self.exploration_space, self.dataset, mean, std, acq,
-                self.objective_fn)
-            self.distribution.show()
-            self.distribution.to_png(self.workdir, self.dataset.last_label)
-
         self.transition.plot(self.exploration_space, self.dataset)
-        self.transition.show()
+        if display:
+            self.transition.show()
         self.transition.to_png(self.workdir, self.dataset.last_label)
+
+        if self.exploration_space.dimension > 2:
+            return
+
+        self.distribution.plot(
+            self.exploration_space, self.dataset, mean, std, acq,
+            self.objective_fn)
+        if display:
+            self.distribution.show()
+        self.distribution.to_png(self.workdir, self.dataset.last_label)
 
     def _fit_to_model(self, X: np.ndarray, Y: np.ndarray) -> None:
         """Train the model using the entire dataset."""
