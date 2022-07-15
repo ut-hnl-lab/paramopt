@@ -18,17 +18,17 @@ class BaseGraph:
         """Plots data on a `matplotlib.pyplot.figure` instance.
 
         This method should be overridden by subclasess to have specific plotting
-        program. The program must plot data on `self.fig`, which is used in the
-        `show()` method. `super().plot()` is required at the beggining of the
-        overriding method.
+        program. The program must plot data on `self.fig`, which is used to save
+        plots. `plt.close()` must be called at the beggining of the overriding
+        method.
         """
-        plt.close()
+        raise NotImplementedError
 
     def show(self) -> None:
         """Displays a graph on a separated window."""
         if self.fig is None:
             raise ValueError("no figure to show")
-        plt.show(block=False)
+        plt.show()
 
     def to_png(
         self, directory: Union[Path, str], label: Optional[str] = None
