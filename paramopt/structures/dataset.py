@@ -66,6 +66,9 @@ class Dataset:
                 ).items())
                 + ")")
 
+    def __len__(self) -> int:
+        return self.__X.shape[0]
+
     @property
     def X(self) -> np.ndarray:
         return self.__X
