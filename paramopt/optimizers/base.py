@@ -51,8 +51,11 @@ class BaseOptimizer:
         self.exploration_space.to_json(self.workdir)
         self.dataset.to_csv(self.workdir)
 
+        if len(dataset) > 0:
+            self._fit_to_model(dataset.X, dataset.Y)
+
     def update(self, X: Any, y: Any, label: Optional[str] = None) -> None:
-        """Update dataset and model with new X and corresponding y.
+        """Updates dataset and model with new X and corresponding y.
 
         The dataset csv file is also updated.
 
@@ -74,7 +77,7 @@ class BaseOptimizer:
         self.dataset = dataset_added
 
     def suggest(self) -> Tuple[Any, ...]:
-        """Determine the next combination of parameters based on gpr predictions
+        """Determines the next combination of parameters based on gpr predictions
         and given acquisition function.
 
         Returns
@@ -88,7 +91,7 @@ class BaseOptimizer:
         return tuple(param_conbinations[np.argmax(acq)])
 
     def plot(self) -> None:
-        """Visualize the distributions of dataset and gpr predictions, and the
+        """Visualizes the distributions of dataset and gpr predictions, and the
         transition of parameter values and the objective score.
 
         The output graphs are also saved as png file.
@@ -109,9 +112,9 @@ class BaseOptimizer:
         self.transition.to_png(self.workdir, self.dataset.last_label)
 
     def _fit_to_model(self, X: np.ndarray, Y: np.ndarray) -> None:
-        """Train the model using the entire dataset."""
+        """Trains the model using the entire dataset."""
         raise NotImplementedError
 
     def _predict_with_model(self, X: np.ndarray) -> Tuple[np.ndarray, ...]:
-        """Predict data distribution with the trained model."""
+        """Predicts data distribution with the trained model."""
         raise NotImplementedError
