@@ -59,6 +59,9 @@ class Dataset:
         self.__label_name = label_name
         self.__labels = labels if labels is not None else []
 
+    def __len__(self) -> int:
+        return self.__X.shape[0]
+
     @property
     def X(self) -> np.ndarray:
         return self.__X
