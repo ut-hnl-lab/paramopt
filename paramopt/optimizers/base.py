@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 from typing import Any, Callable, Optional, Tuple, Union
 import warnings
 
@@ -44,12 +45,21 @@ class BaseOptimizer:
         self.exploration_space = exploration_space
         self.dataset = dataset
         self.acquisition = acquisition
-        self.objective_fn = objective_fn
-        self.distribution = Distribution()
-        self.transition = Transition()
+        self._objective_fn = objective_fn
+        self._distribution = Distribution()
+        self._transition = Transition()
 
         self.exploration_space.to_json(self.workdir)
         self.dataset.to_csv(self.workdir)
+
+    def __repr__(self) -> str:
+        return (f"{self.__class__.__name__}("
+                + ", ".join(re.sub('[ \n]+', ' ', f"{key}={val}") for key, val \
+                    in dict(filter(
+                        lambda d: not d[0].startswith(f"_"),
+                        self.__dict__.items())
+                ).items())
+                + ")")
 
     def update(self, X: Any, Y: Any, label: Optional[Any] = None) -> None:
         """Update dataset and model with new X and corresponding y.
@@ -89,7 +99,7 @@ class BaseOptimizer:
 
     def plot(self) -> None:
         """Visualize the distributions of dataset and gpr predictions, and the
-        transition of parameter values and the objective score.
+        _transition of parameter values and the objective score.
 
         The output graphs are also saved as png file.
         """
@@ -98,20 +108,20 @@ class BaseOptimizer:
         acq = self.acquisition(mean, std, self.dataset.X, self.dataset.Y)
 
         if self.exploration_space.dimension <= 2:
-            self.distribution.plot(
+            self._distribution.plot(
                 self.exploration_space, self.dataset, mean, std, acq,
-                self.objective_fn)
-            self.distribution.show()
-            self.distribution.to_png(self.workdir, self.dataset.last_label)
+                self._objective_fn)
+            self._distribution.show()
+            self._distribution.to_png(self.workdir, self.dataset.last_label)
 
-        self.transition.plot(self.exploration_space, self.dataset)
-        self.transition.show()
-        self.transition.to_png(self.workdir, self.dataset.last_label)
+        self._transition.plot(self.exploration_space, self.dataset)
+        self._transition.show()
+        self._transition.to_png(self.workdir, self.dataset.last_label)
 
     def _fit_to_model(self, X: np.ndarray, Y: np.ndarray) -> None:
         """Train the model using the entire dataset."""
         raise NotImplementedError
 
     def _predict_with_model(self, X: np.ndarray) -> Tuple[np.ndarray, ...]:
-        """Predict data distribution with the trained model."""
+        """Predict data _distribution with the trained model."""
         raise NotImplementedError
