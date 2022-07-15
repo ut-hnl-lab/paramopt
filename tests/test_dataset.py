@@ -79,6 +79,7 @@ def test_file_io():
     d3.to_csv(path)
     assert d3.X.shape == (2,2)
     assert d3.Y.shape == (2,2)
+    assert len(d3) == 2
 
 
 # 異なる長さの配列の追加 -> エラー
