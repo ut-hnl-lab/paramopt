@@ -32,6 +32,7 @@ Install Param Opt via pip:
 pip install git+https://github.com/ut-hnl-lab/paramopt.git
 ```
 The following packages are also required:
+* Dacite
 * Matplotlib
 * Natsort
 * Numpy
