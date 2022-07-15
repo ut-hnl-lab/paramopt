@@ -38,7 +38,7 @@ class Transition(BaseGraph):
         If given, valiable-length arguments are used to setup
         `matplotlib.pyplot.figure`.
         """
-        super().plot()
+        plt.close()
 
         if exploration_space.dimension != dataset.dimension_X:
             raise ValueError(
