@@ -59,6 +59,13 @@ class Dataset:
         self.__label_name = label_name
         self.__labels = labels if labels is not None else []
 
+    def __repr__(self) -> str:
+        return (f"{self.__class__.__name__}("
+                + ", ".join(f"{key}={val}" for key, val in dict(filter(
+                    lambda d: not d[0].startswith(f"_"), self.__dict__.items())
+                ).items())
+                + ")")
+
     @property
     def X(self) -> np.ndarray:
         return self.__X

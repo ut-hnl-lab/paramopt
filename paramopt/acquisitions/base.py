@@ -8,6 +8,11 @@ class BaseAcquisition:
     write calculation in overrided `__call__()` method to create a new one.
     """
 
+    def __repr__(self) -> str:
+        return (f"{self.__class__.__name__}("
+                + ", ".join(f"{key}={val}" for key, val in self.__dict__.items())
+                + ")")
+
     def __call__(
         self,
         mean: np.ndarray,
