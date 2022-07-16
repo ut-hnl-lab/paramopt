@@ -64,10 +64,9 @@ def test_len_mismatch():
 # ファイル入出力
 def test_file_io():
     path = Path.cwd()/'tests'/'output'/'dataset_file_io'
-    path.mkdir(exist_ok=True, parents=True)
     d1 = Dataset(["X1", "X2"], ["Y1", "Y2"])
     d1.to_csv(path)
-    d2 = Dataset.from_csv(path/Dataset.EXPORT_NAME, 2, 2)
+    d2 = Dataset.from_csv(path, 2, 2)
     assert d2.X_names == ["X1", "X2"]
     assert d2.Y_names == ["Y1", "Y2"]
     assert d2.X.shape == (0,2)
@@ -76,10 +75,12 @@ def test_file_io():
     assert d2.dimension_Y == 2
 
     d3 = d2.add([9,8], [7,6], "#1").add([5,4], [3,2], "#2")
-    d3.to_csv(path)
+    d3.to_csv(path/'custom_name.csv')
     assert d3.X.shape == (2,2)
     assert d3.Y.shape == (2,2)
     assert len(d3) == 2
+
+    d4 = Dataset.from_csv(path/'custom_name.csv', 2, 2)
 
 
 # 異なる長さの配列の追加 -> エラー

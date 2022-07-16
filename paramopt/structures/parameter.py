@@ -1,7 +1,7 @@
 from dataclasses import dataclass, asdict, field
 import json
 from pathlib import Path
-from typing import List, ClassVar, Union
+from typing import List, ClassVar, Optional, Union
 
 from dacite import from_dict
 import numpy as np
@@ -47,40 +47,57 @@ class ExplorationSpace:
     def grid_spaces(self) ->  List[List[Union[int, float]]]:
         return self.__grid_spaces
 
-    @staticmethod
-    def from_json(filepath: Union[Path, str]) -> 'ExplorationSpace':
-        """Reads the the exploration space definition from a json file.
+    @classmethod
+    def from_json(cls, path: Union[Path, str] = None) -> 'ExplorationSpace':
+        """Reads the definition of the exploration space in a json file and
+        generates a new `ExplorationSpace` instance.
 
         Parameters
         ----------
-        filepath : pathlib.Path or str
-            Json file path
+        path : pathlib.Path or str, default is `None`
+            Path to the input json file or the directory where the file exists.
+            If set to `None`, `pathlib.Path.cwd()/ExplorationSpace.EXPORT_NAME`
+            is used.
 
         Returns
         -------
         ExplorationSpace
-            New `ExplorationSpace` containing json data.
+            New `ExplorationSpace` containing imported json data.
         """
-        filepath_ = Path(filepath)
-        with filepath_.open(mode='r') as f:
+        path_ = Path(path) if path is not None else Path.cwd()
+
+        if path_.is_file():
+            filepath = path_
+        elif path_.is_dir():
+            filepath = path_/cls.EXPORT_NAME
+        else:
+            raise FileNotFoundError('no such file or directory')
+
+        with filepath.open(mode='r') as f:
             data = json.load(f)
         return from_dict(ExplorationSpace, data)
 
-    def to_json(self, directory: Union[Path, str]) -> None:
-        """Writes the exploration space definition to a csv file in the given
-        directory.
-
-        If the json file with the `ExplorationSpace.EXPORT_NAME` does not exist
-        in the directory, new one is created.
+    def to_json(self, path: Union[Path, str] = None) -> None:
+        """Creates a json file and writes the exploration space in it.
 
         Parameters
         ----------
-        directory : pathlib.Path or str
-            Directory where json files are output.
+        path : pathlib.Path or str, default is `None`
+            Path of the output json file or the directory where the file is
+            exported.
+            If set to `None`, `pathlib.Path.cwd()/ExplorationSpace.EXPORT_NAME`
+            is used.
         """
-        directory_ = Path(directory)
-        directory_.mkdir(exist_ok=True, parents=True)
-        with (directory_/self.EXPORT_NAME).open(mode='w') as f:
+        path_ = Path(path) if path is not None else Path.cwd()
+
+        if path_.suffix != "":
+            path_.parent.mkdir(exist_ok=True, parents=True)
+            filepath = path_
+        else:
+            path_.mkdir(exist_ok=True, parents=True)
+            filepath = path_/self.EXPORT_NAME
+
+        with filepath.open(mode='w') as f:
             json.dump(asdict(self), f, indent=4)
 
     def conbinations(self) -> np.ndarray:
@@ -117,7 +134,7 @@ class ProcessParameter:
     def __post_init__(self) -> None:
         length = len(self.values)
         if length < 1:
-            raise ValueError("values must not be empty")
+            raise ValueError("values cannot be empty")
         elif length == 1:
             self.grid_values = self.values.copy()
         else:

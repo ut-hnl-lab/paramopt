@@ -140,25 +140,26 @@ class Dataset:
 
         return Dataset(self.X_names, self.Y_names, self.label_name, X, Y, labels)
 
-    @staticmethod
+    @classmethod
     def from_csv(
-        filepath: Union[Path, str], n_X: int, n_Y: int = 1
+        cls, path: Union[Path, str] = None, n_X: int = 1, n_Y: int = 1,
     ) -> 'Dataset':
-        """Reads data from a csv file and generates a `Dataset` instance.
+        """Reads thee data in a csv file and generates a `Dataset` instance.
 
         Parameters
         ----------
-        filepath : pathlib.Path or str
-            Csv file path.
-        n_X : int
+        path : pathlib.Path or str, default is `None`
+            Path to the input csv file or the directory where the file exists.
+            If set to `None`, `pathlib.Path.cwd()/Dataset.EXPORT_NAME` is used.
+        n_X : int, default is `1`
             Number of category X.
-        n_Y : int, optional
+        n_Y : int, default is `1`
             Number of category Y.
 
         Returns
         -------
         Dataset
-            New `Dataset` containing csv data.
+            New `Dataset` containing imported csv data.
 
         Raises
         ------
@@ -166,9 +167,20 @@ class Dataset:
             Raises if the total number of categories and `n_X + n_Y + 1 (number
             of label category)` are different.
         """
-        df = pd.read_csv(Path(filepath))
+        path_ = Path(path) if path is not None else Path.cwd()
+
+        if path_.is_file():
+            filepath = path_
+        elif path_.is_dir():
+            filepath = path_/cls.EXPORT_NAME
+        else:
+            raise FileNotFoundError('no such file or directory')
+
+        df = pd.read_csv(filepath)
         if len(df.columns) != n_X + n_Y + 1:
-            raise ValueError("column length does not match given data length")
+            raise ValueError(
+                f"column length (X={n_X}, Y={n_Y}) does not match" \
+                + " given data length")
 
         X_names = df.columns[:n_X].to_list()
         Y_names = df.columns[n_X:n_X+n_Y].to_list()
@@ -181,22 +193,28 @@ class Dataset:
 
         return Dataset(X_names, Y_names, label_name, X, Y, labels)
 
-    def to_csv(self, directory: Union[Path, str]) -> None:
-        """Write data to a csv file in the given directory.
-
-        If the csv file with the `Dataset.EXPORT_NAME` does not exist in the
-        directory, new one is created.
+    def to_csv(self, path: Union[Path, str] = None) -> None:
+        """Crates a csv file and writes data in it.
 
         Parameters
         ----------
-        directory : pathlib.Path or str
-            Directory where csv files are output.
+        path : pathlib.Path or str, default is `None`
+            Path of the output csv file or the directory where the file is
+            exported.
+            If set to `None`, `pathlib.Path.cwd()/Dataset.EXPORT_NAME` is used.
         """
+        path_ = Path(path) if path is not None else Path.cwd()
+
+        if path_.suffix != "":
+            path_.parent.mkdir(exist_ok=True, parents=True)
+            filepath = path_
+        else:
+            path_.mkdir(exist_ok=True, parents=True)
+            filepath = path_/self.EXPORT_NAME
+
         X_df = pd.DataFrame(self.__X, columns=self.X_names)
         Y_df = pd.DataFrame(self.__Y, columns=self.Y_names)
         label_df = pd.DataFrame(self.__labels, columns=[self.label_name])
         concated = pd.concat([X_df, Y_df, label_df], axis=1)
 
-        directory_ = Path(directory)
-        directory_.mkdir(exist_ok=True, parents=True)
-        concated.to_csv(directory_/self.EXPORT_NAME, index=False)
+        concated.to_csv(filepath, index=False)

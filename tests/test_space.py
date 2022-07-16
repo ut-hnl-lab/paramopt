@@ -48,12 +48,13 @@ def test_name_dup():
 # ファイル入出力
 def test_file_io():
     path = Path.cwd()/'tests'/'output'/'space_file_io'
-    path.mkdir(exist_ok=True, parents=True)
     pp1 = ProcessParameter("first", [0,1,2])
     pp2 = ProcessParameter("second", [7,10])
     es1 = ExplorationSpace([pp1, pp2])
     es1.to_json(path)
 
-    es2 = ExplorationSpace.from_json(path/ExplorationSpace.EXPORT_NAME)
-
+    es2 = ExplorationSpace.from_json(path)
     assert es1 == es2
+
+    es2.to_json(path/'custom_name.json')
+    es3 = ExplorationSpace.from_json(path/'custom_name.json')
