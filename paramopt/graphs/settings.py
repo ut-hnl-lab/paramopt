@@ -8,3 +8,5 @@ plt.rcParams['legend.fontsize'] = 13
 plt.rcParams['xtick.labelsize'] = 14
 plt.rcParams['ytick.labelsize'] = 14
 plt.rcParams['font.family'] = 'Times New Roman'
+plt.rcParams['grid.color'] = 'black'
+plt.rcParams['grid.linewidth'] = 0.1

@@ -84,6 +84,7 @@ def _plot_process_1d(
         ax_upper = fig.add_subplot(spec[0])
         ax_lower = fig.add_subplot(spec[1], sharex=ax_upper)
         ax_lower.plot(X_grid, acquisition, 'r-')
+        ax_lower.set_xlim(X_grid[0], X_grid[-1])
         ax_lower.set_xlabel(X_name)
         ax_lower.set_ylabel("Acquisition")
         ax_upper.tick_params(bottom=False, labelbottom=False)
@@ -94,8 +95,10 @@ def _plot_process_1d(
     if objective_fn is not None:
         ax_upper.plot(
             X_grid, objective_fn(X_grid), 'k:', alpha=.5, label="Objective fn")
+
     if mean is not None:
         ax_upper.plot(X_grid, mean, 'b-', label="Prediction")
+
     if std is not None:
         ax_upper.fill(
             np.concatenate([X_grid, X_grid[::-1]]),
@@ -104,6 +107,7 @@ def _plot_process_1d(
 
     ax_upper.plot(X[:-1], Y[:-1], 'ko', label="Observations")
     ax_upper.plot(X[-1], Y[-1], "ro")
+    ax_upper.set_xlim(X_grid[0], X_grid[-1])
     ax_upper.set_ylabel(Y_name)
     ax_upper.legend(
         loc='lower center', bbox_to_anchor=(.5, 0.97), ncol=3, frameon=False)
@@ -130,25 +134,31 @@ def _plot_process_2d(
         ax.plot_wireframe(
             Xmeshes[0], Xmeshes[1], objective_fn(Xmeshes[0], Xmeshes[1]),
             color="black", alpha=0.5, linewidth=0.5, label="Objective fn")
+
     if mean is not None:
         mean = mean.reshape(X_grids[0].shape[0], X_grids[1].shape[0])
         ax.plot_wireframe(
             Xmeshes[0], Xmeshes[1], mean.T, color="blue", alpha=0.6,
             linewidth=0.5, label="Prediction")
+
     ax.scatter(X[:-1, 0], X[:-1, 1], Y[:-1], c="black", label="Observations")
     ax.scatter(X[-1, 0], X[-1, 1], Y[-1], c="red")
+
     if acquisition is not None:
+        z_from, z_to = ax.get_zlim()
         acquisition = acquisition.reshape(
             X_grids[0].shape[0], X_grids[1].shape[0])
         contf = ax.contourf(
             Xmeshes[0], Xmeshes[1], acquisition.T, zdir="z",
-            offset=ax.get_zlim()[0], cmap=cm.jet, levels=100)
+            offset=z_from, cmap=cm.jet, levels=100)
         fig.colorbar(contf, pad=0.1, shrink=0.6, label="Acquisition")
+        ax.set_zlim(z_from, z_to)
 
+    ax.set_xlim(X_grids[0][0], X_grids[0][-1])
+    ax.set_ylim(X_grids[1][0], X_grids[1][-1])
     ax.set_xlabel(X_names[0])
     ax.set_ylabel(X_names[1])
     ax.set_zlabel(Y_name)
-    ax.grid(False)
     ax.legend(
         loc='lower center', bbox_to_anchor=(.5, 0.97), ncol=3, frameon=False)
 
