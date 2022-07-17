@@ -26,22 +26,23 @@ def make_train_dataset(X, y):
 
 
 def predict_with_gp(X_train, y_train, X):
-    kernel = 1 * RBF(length_scale=1.0, length_scale_bounds=(1e-2, 1e2))
+    kernel = 1 * RBF(length_scale=10.0, length_scale_bounds='fixed')
     gaussian_process = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=9)
     gaussian_process.fit(X_train, y_train)
 
     mean_prediction, std_prediction = gaussian_process.predict(X, return_std=True)
     ucb = UCB(c=1.0)
     acquisition = ucb(mean_prediction, std_prediction, X_train, y_train)
+    next_X = X[np.argmax(acquisition)]
 
-    return mean_prediction, std_prediction, acquisition
+    return mean_prediction, std_prediction, acquisition, next_X
 
 
 def test_dist_1d():
     X = np.linspace(start=0, stop=10, num=1_000).reshape(-1, 1)
     y = np.squeeze(f1(X))
     X_train, y_train = make_train_dataset(X, y)
-    mean_prediction, std_prediction, acquisition = predict_with_gp(X_train, y_train, X)
+    mean_prediction, std_prediction, acquisition, next_X = predict_with_gp(X_train, y_train, X)
 
     fig = _plot_process_1d(plt.figure(), X_train, y_train, X)
     fig.tight_layout()
@@ -49,7 +50,7 @@ def test_dist_1d():
     fig = _plot_process_1d(plt.figure(), X_train, y_train, X, mean_prediction, std_prediction)
     fig.tight_layout()
     plt.show()
-    fig = _plot_process_1d(plt.figure(), X_train, y_train, X, mean_prediction, std_prediction, acquisition, f1)
+    fig = _plot_process_1d(plt.figure(), X_train, y_train, X, mean_prediction, std_prediction, acquisition, next_X, f1)
     fig.tight_layout()
     plt.show()
 
@@ -60,7 +61,7 @@ def test_dist_2d():
     X = np.array(list(product(X1.flatten(), X2.flatten())))
     y = np.squeeze(f2(X[:,0], X[:,1]))
     X_train, y_train = make_train_dataset(X, y)
-    mean_prediction, std_prediction, acquisition = predict_with_gp(X_train, y_train, X)
+    mean_prediction, std_prediction, acquisition, next_X = predict_with_gp(X_train, y_train, X)
 
     fig = _plot_process_2d(plt.figure(), X_train, y_train, [X1, X2])
     fig.tight_layout()
@@ -68,7 +69,7 @@ def test_dist_2d():
     fig = _plot_process_2d(plt.figure(), X_train, y_train, [X1, X2], mean_prediction)
     fig.tight_layout()
     plt.show()
-    fig = _plot_process_2d(plt.figure(), X_train, y_train, [X1, X2], mean_prediction, acquisition, f2)
+    fig = _plot_process_2d(plt.figure(), X_train, y_train, [X1, X2], mean_prediction, acquisition, next_X, f2)
     fig.tight_layout()
     plt.show()
 

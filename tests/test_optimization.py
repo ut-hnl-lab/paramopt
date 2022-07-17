@@ -56,7 +56,9 @@ def test_1d():
     space = ExplorationSpace([ProcessParameter("Parameter 1", list(range(11)))])
     dataset = Dataset(space.names, "Evaluation")
     model = GaussianProcessRegressor(
-            kernel=RBF(length_scale=0.5) * ConstantKernel() + WhiteKernel(),
+            kernel=RBF(length_scale=1, length_scale_bounds='fixed') \
+                  * ConstantKernel() \
+                  + WhiteKernel(),
             normalize_y=True)
     acquisition = UCB(1.0)
 
@@ -80,7 +82,9 @@ def test_2d():
     ])
     dataset = Dataset(space.names, "Evaluation")
     model = GaussianProcessRegressor(
-            kernel=RBF() * ConstantKernel() + WhiteKernel(),
+            kernel=RBF(length_scale=50, length_scale_bounds='fixed') \
+                  * ConstantKernel() \
+                  + WhiteKernel(),
             normalize_y=True)
     acquisition = UCB(1.0)
 
@@ -100,9 +104,9 @@ def test_1d_autohp():
     workdir = Path.cwd()/'tests'/'output'/'explore_1d_autohp'
     space = ExplorationSpace([ProcessParameter("Parameter 1", list(range(11)))])
 
-    def gpr_generator(exp, nro):
+    def gpr_generator(ls, nro):
         return GaussianProcessRegressor(
-            kernel=RBF(length_scale_bounds=(10**-exp, 10**exp)) \
+            kernel=RBF(length_scale=ls, length_scale_bounds='fixed') \
                     * ConstantKernel() \
                     + WhiteKernel(),
             normalize_y=True,
@@ -113,12 +117,12 @@ def test_1d_autohp():
         workdir=workdir,
         exploration_space=space,
         gpr_generator=gpr_generator,
-        exp=list(range(1, 6)),
+        ls=list(range(1, 11)),
         nro=list(range(0, 10))
     )
 
     dataset = Dataset(space.names, "Evaluation")
-    acquisition = UCB(1.0)
+    acquisition = UCB(2.0)
 
     bayesian_optimizer = BayesianOptimizer(
         workdir=workdir,
@@ -139,9 +143,9 @@ def test_2d_autohp():
         ProcessParameter("Parameter 2", list(range(10, 220, 10))),
     ])
 
-    def gpr_generator(exp, nro):
+    def gpr_generator(ls, nro):
         return GaussianProcessRegressor(
-            kernel=RBF(length_scale_bounds=(10**-exp, 10**exp)) \
+            kernel=RBF(length_scale=ls, length_scale_bounds='fixed') \
                     * ConstantKernel() \
                     + WhiteKernel(),
             normalize_y=True,
@@ -152,12 +156,13 @@ def test_2d_autohp():
         workdir=workdir,
         exploration_space=space,
         gpr_generator=gpr_generator,
-        exp=list(range(1, 6)),
+        stop_fitting_score=0.98,
+        ls=list(range(10, 105, 5)),
         nro=list(range(0, 10))
     )
 
     dataset = Dataset(space.names, "Evaluation")
-    acquisition = UCB(1.0)
+    acquisition = UCB(2.0)
 
     bayesian_optimizer = BayesianOptimizer(
         workdir=workdir,
