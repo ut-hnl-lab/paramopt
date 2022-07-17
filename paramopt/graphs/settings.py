@@ -2,16 +2,26 @@ from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d.axis3d import Axis
 import numpy as np
 
-
-plt.rcParams['xtick.direction'] = 'in'
-plt.rcParams['ytick.direction'] = 'in'
-plt.rcParams['font.size'] = 16
-plt.rcParams['legend.fontsize'] = 13
-plt.rcParams['xtick.labelsize'] = 14
-plt.rcParams['ytick.labelsize'] = 14
+# Font settings
 plt.rcParams['font.family'] = 'Times New Roman'
+plt.rcParams['font.size'] = 14
+plt.rcParams['legend.fontsize'] = 10
+plt.rcParams['xtick.labelsize'] = 12
+plt.rcParams['ytick.labelsize'] = 12
+
+# tick and line settings
 plt.rcParams['grid.color'] = 'black'
 plt.rcParams['grid.linewidth'] = 0.1
+plt.rcParams['legend.edgecolor'] = 'inherit'
+plt.rcParams['legend.fancybox'] = False
+plt.rcParams['xtick.direction'] = 'in'
+plt.rcParams['ytick.direction'] = 'in'
+
+# color settings
+plt.rcParams['legend.framealpha'] = 0.6
+
+# margin settings
+plt.rcParams['figure.subplot.hspace'] = 0
 
 
 def _get_nomargin_coord_info(self, renderer):
@@ -32,5 +42,5 @@ def _get_nomargin_coord_info(self, renderer):
         return mins, maxs, centers, deltas, tc, highs
 
 
-# Remove small margins in 3D plots
+# Remove small margins from 3D plots
 Axis._get_coord_info = _get_nomargin_coord_info
