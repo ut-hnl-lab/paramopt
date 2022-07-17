@@ -138,20 +138,20 @@ def _plot_process_2d(
     if mean is not None:
         mean = mean.reshape(X_grids[0].shape[0], X_grids[1].shape[0])
         ax.plot_wireframe(
-            Xmeshes[0], Xmeshes[1], mean.T, color="blue", alpha=0.6,
+            Xmeshes[0], Xmeshes[1], mean.T, color="blue", alpha=0.5,
             linewidth=0.5, label="Prediction")
 
     ax.scatter(X[:-1, 0], X[:-1, 1], Y[:-1], c="black", label="Observations")
     ax.scatter(X[-1, 0], X[-1, 1], Y[-1], c="red")
+    z_from, z_to = ax.get_zlim()
 
     if acquisition is not None:
-        z_from, z_to = ax.get_zlim()
         acquisition = acquisition.reshape(
             X_grids[0].shape[0], X_grids[1].shape[0])
         contf = ax.contourf(
             Xmeshes[0], Xmeshes[1], acquisition.T, zdir="z",
-            offset=z_from, cmap=cm.jet, levels=100)
-        fig.colorbar(contf, pad=0.1, shrink=0.6, label="Acquisition")
+            offset=z_from, cmap=cm.jet, levels=100, alpha=0.6)
+        fig.colorbar(contf, pad=0.1, shrink=0.7, label="Acquisition")
         ax.set_zlim(z_from, z_to)
 
     ax.set_xlim(X_grids[0][0], X_grids[0][-1])
