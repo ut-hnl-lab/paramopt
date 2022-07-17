@@ -52,6 +52,7 @@ class BaseOptimizer:
         self._objective_fn = objective_fn
         self._distribution = Distribution()
         self._transition = Transition()
+        self._next_combination = None
 
         self.exploration_space.to_json(self.workdir)
         self.dataset.to_csv(self.workdir)
@@ -103,8 +104,8 @@ class BaseOptimizer:
         mean_, std_ = self._predict_with_model(param_conbinations)
         mean, std = mean_.reshape(-1, 1), std_.reshape(-1, 1)
         acq = self.acquisition(mean, std, self.dataset.X, self.dataset.Y)
-        next_combination = param_conbinations[np.argmax(acq)]
-        return _map_to_builtin_types(next_combination)
+        self._next_combination = param_conbinations[np.argmax(acq)]
+        return _map_to_builtin_types(self._next_combination)
 
     def plot(self, display: bool = False) -> None:
         """Plots the distributions of dataset and gpr predictions, and the
@@ -121,7 +122,9 @@ class BaseOptimizer:
         mean, std = mean_.reshape(-1, 1), std_.reshape(-1, 1)
         acq = self.acquisition(mean, std, self.dataset.X, self.dataset.Y)
 
-        self._transition.plot(self.exploration_space, self.dataset)
+        self._transition.plot(
+            exploration_space=self.exploration_space,
+            dataset=self.dataset)
         if display:
             self._transition.show()
         self._transition.to_png(self.workdir, self.dataset.last_label)
@@ -130,8 +133,14 @@ class BaseOptimizer:
             return
 
         self._distribution.plot(
-            self.exploration_space, self.dataset, mean, std, acq,
-            self.objective_fn)
+            exploration_space=self.exploration_space,
+            dataset=self.dataset,
+            mean=mean,
+            std=std,
+            acquisition=acq,
+            next_X=self._next_combination,
+            objective_fn=self._objective_fn,
+            acquisition_name=self.acquisition.__class__.__name__)
         if display:
             self._distribution.show()
         self._distribution.to_png(self.workdir, self.dataset.last_label)
