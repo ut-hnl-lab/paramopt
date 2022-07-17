@@ -1,7 +1,7 @@
 from inspect import signature
 from itertools import product
 from pathlib import Path
-from typing import Any, Callable, Dict, Union
+from typing import Any, Callable, Dict, Optional, Union
 import warnings
 
 import numpy as np
@@ -30,6 +30,8 @@ class AutoHPGPR:
         An exploration space definition.
     gpr_generator : Callable
         A function that generates gpr model. This should receive hyperparameters.
+    stop_fitting_score: float, default is `0.9`
+        Fitting score to stop adjusting if exceeded.
     **hparams: Any
         Hyperparameter spaces. When `gpr_generator` takes arguments named `a`
         and `b`, this keyword argument takes list of their possible values like
@@ -41,13 +43,13 @@ class AutoHPGPR:
         Raises when the number of `gpr_generator` arguments does not match the
         number of hyperparameter spaces.
     """
-    MIN_FITTING_SCORE = 0.8
 
     def __init__(
         self,
         workdir: Union[Path, str],
         exploration_space: 'ExplorationSpace',
         gpr_generator: Callable,
+        stop_fitting_score: Optional[float] = 0.9,
         **hparams: Any
     ) -> None:
         if signature(gpr_generator).parameters.keys() != hparams.keys():
@@ -57,6 +59,7 @@ class AutoHPGPR:
         self.space_grid = exploration_space.grid_conbinations()
         self.gpr_generator = gpr_generator
         self.hparams = hparams
+        self.stop_fitting_score = stop_fitting_score
         self.best_gpr = gpr_generator(
             **{key: vals[0] for key, vals in hparams.items()})
 
@@ -73,7 +76,7 @@ class AutoHPGPR:
                 best_score = score
                 best_gpr = gpr
                 best_hps = hps
-            if score >= self.MIN_FITTING_SCORE:
+            if score >= self.stop_fitting_score:
                 break
         else:
             warnings.warn(f"Hyper parameter adjustment failed.", UserWarning)
