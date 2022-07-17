@@ -1,4 +1,4 @@
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, List, Optional, Tuple
 
 from matplotlib import cm, gridspec, pyplot as plt
 from matplotlib.figure import Figure
@@ -74,6 +74,7 @@ def _plot_process_1d(
     mean: Optional[np.ndarray] = None,
     std: Optional[np.ndarray] = None,
     acquisition: Optional[np.ndarray] = None,
+    next_X: Optional[Any] = None,
     objective_fn: Optional[Callable] = None,
     X_name: str = "x",
     Y_name: str = "y"
@@ -83,14 +84,9 @@ def _plot_process_1d(
         spec = gridspec.GridSpec(ncols=1, nrows=2, height_ratios=[3, 1])
         ax_upper = fig.add_subplot(spec[0])
         ax_lower = fig.add_subplot(spec[1], sharex=ax_upper)
-        ax_lower.plot(X_grid, acquisition, 'r-')
-        ax_lower.set_xlim(X_grid[0], X_grid[-1])
-        ax_lower.set_xlabel(X_name)
-        ax_lower.set_ylabel("Acquisition")
-        ax_upper.tick_params(bottom=False, labelbottom=False)
     else:
         ax_upper = fig.add_subplot()
-        ax_upper.set_xlabel(X_name)
+        ax_lower = None
 
     if objective_fn is not None:
         ax_upper.plot(
@@ -106,7 +102,23 @@ def _plot_process_1d(
             "p-", alpha=.5, label="95% CI")
 
     ax_upper.plot(X[:-1], Y[:-1], 'ko', label="Observations")
-    ax_upper.plot(X[-1], Y[-1], "ro")
+    ax_upper.plot(X[-1], Y[-1], 'ro')
+
+    if acquisition is not None:
+        ax_lower.plot(X_grid, acquisition, 'r-')
+
+    if next_X is not None:
+        ax_upper.axvline(next_X, color="red", linewidth=0.8)
+        if ax_lower is not None:
+            ax_lower.axvline(next_X, color="red", linewidth=0.8)
+
+    if ax_lower is not None:
+        ax_lower.set_xlim(X_grid[0], X_grid[-1])
+        ax_lower.set_xlabel(X_name)
+        ax_lower.set_ylabel("Acquisition")
+        ax_upper.tick_params(bottom=False, labelbottom=False)
+    else:
+        ax_upper.set_xlabel(X_name)
     ax_upper.set_xlim(X_grid[0], X_grid[-1])
     ax_upper.set_ylabel(Y_name)
     ax_upper.legend(
@@ -122,6 +134,7 @@ def _plot_process_2d(
     X_grids: List[np.ndarray],
     mean: Optional[np.ndarray] = None,
     acquisition: Optional[np.ndarray] = None,
+    next_X: Optional[Tuple[Any]] = None,
     objective_fn: Optional[Callable] = None,
     X_names: List[str] = ["x1", "x2"],
     Y_name: str = "y"
@@ -141,9 +154,17 @@ def _plot_process_2d(
             Xmeshes[0], Xmeshes[1], mean.T, color="blue", alpha=0.5,
             linewidth=0.5, label="Prediction")
 
-    ax.scatter(X[:-1, 0], X[:-1, 1], Y[:-1], c="black", label="Observations")
-    ax.scatter(X[-1, 0], X[-1, 1], Y[-1], c="red")
+    ax.scatter(X[:-1, 0], X[:-1, 1], Y[:-1], color="black", label="Observations")
+    ax.scatter(X[-1, 0], X[-1, 1], Y[-1], color="red")
     z_from, z_to = ax.get_zlim()
+
+    for i in range(X.shape[0]-1):
+        ax.plot(
+            [X[i, 0]]*2, [X[i, 1]]*2, [z_from, Y[i]], color='black',
+            linewidth=0.8, linestyle='--', zorder=100)
+    ax.plot(
+        [X[-1, 0]]*2, [X[-1, 1]]*2, [z_from, Y[-1]], color='red', linestyle='--',
+        linewidth=0.8, zorder=100)
 
     if acquisition is not None:
         acquisition = acquisition.reshape(
@@ -154,12 +175,20 @@ def _plot_process_2d(
         fig.colorbar(contf, pad=0.1, shrink=0.7, label="Acquisition")
         ax.set_zlim(z_from, z_to)
 
+    if next_X is not None:
+        ax.plot(
+            [next_X[0]]*2, [next_X[1]]*2, [z_from, z_to], color='red', linestyle='-',
+            linewidth=0.8, zorder=100)
+
     ax.set_xlim(X_grids[0][0], X_grids[0][-1])
     ax.set_ylim(X_grids[1][0], X_grids[1][-1])
     ax.set_xlabel(X_names[0])
     ax.set_ylabel(X_names[1])
     ax.set_zlabel(Y_name)
-    ax.legend(
-        loc='lower center', bbox_to_anchor=(.5, 0.97), ncol=3, frameon=False)
+    leg = ax.legend(
+        loc='lower center', bbox_to_anchor=(.5, 0.97), ncol=2, frameon=False)
+    for line in leg.get_lines():
+        line.set_linewidth(1.5)
+        line.set_alpha(1.0)
 
     return fig

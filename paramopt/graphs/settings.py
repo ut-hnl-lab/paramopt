@@ -23,9 +23,6 @@ def _get_nomargin_coord_info(self, renderer):
         centers = (maxs + mins) / 2.
         deltas = (maxs - mins) / 12.
 
-        # mins = mins - deltas / 24.
-        # maxs = maxs + deltas / 24.
-
         vals = mins[0], maxs[0], mins[1], maxs[1], mins[2], maxs[2]
         tc = self.axes.tunit_cube(vals, renderer.M)
         avgz = [tc[p1][2] + tc[p2][2] + tc[p3][2] + tc[p4][2]
