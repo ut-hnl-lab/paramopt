@@ -20,7 +20,7 @@
 
 ## Overview
 
-<img src=https://user-images.githubusercontent.com/88641432/177723799-e628ba9a-97f9-4bf0-8110-62b7319860d4.png>
+<img src=https://user-images.githubusercontent.com/88641432/179461743-f48ec565-e66e-4089-976b-4d4aa9c3accb.png>
 
 Bayesian optimization is used for adjusting process parameters (= experimental parameters), such as instrument settings, chemical formulation rates, hyperparameters for machine learning models, and more.
 
@@ -59,7 +59,7 @@ workdir = pathlib.Path.cwd()
 
 ###  <li>Defining Target Parameters</li>
 
-<img src=https://user-images.githubusercontent.com/88641432/177726927-ca4f8f7c-3f78-4585-b0f5-da198d4179b8.png width="50%">
+<img src=https://user-images.githubusercontent.com/88641432/179461813-4ba5c30b-3fba-40fb-ba8e-f7009ff24a1b.png width="50%">
 
 Define parameters to be adjusted.
 ```python
@@ -81,7 +81,7 @@ space = ExplorationSpace.from_json(workdir)  # import
 
 ### <li>Creating Dataset</li>
 
-<img src=https://user-images.githubusercontent.com/88641432/177725196-2f3043e4-31be-4939-ba48-c276f503246c.png width="45%">
+<img src=https://user-images.githubusercontent.com/88641432/179461866-07f71fa1-0955-4980-8bbf-e70f7aa45581.png width="45%">
 
 Create a dataset consisting of an explanatory variables with `X_names` and objective variables with `Y_names`.
 ```python
@@ -169,7 +169,7 @@ Create a GIF movie from the obtained plot images
 paths = select_images()  # Opens a GUI dialog
 create_gif(paths)
 ```
-<img src="https://user-images.githubusercontent.com/88641432/177729552-23194201-8241-4c3f-b814-68e5bd69b4bb.PNG" width="40%"><img src=https://user-images.githubusercontent.com/88641432/177729289-6ab150dd-c487-488f-bb82-d52e94fb77e9.gif width="40%">
+<img src="https://user-images.githubusercontent.com/88641432/177729552-23194201-8241-4c3f-b814-68e5bd69b4bb.PNG" width="30%"><img src=https://user-images.githubusercontent.com/88641432/177729289-6ab150dd-c487-488f-bb82-d52e94fb77e9.gif width="60%">
 
 
 # License
