@@ -22,12 +22,12 @@ class Transition(BaseGraph):
     """
     PNG_PREFIX = "trans-"
 
-    def __init__(self) -> None:
-        self.fig = None
+    def __init__(self, exploration_space: 'ExplorationSpace') -> None:
+        super().__init__()
+        self.exploration_space = exploration_space
 
     def plot(
         self,
-        exploration_space: 'ExplorationSpace',
         dataset: 'Dataset',
         *args: Any,
         **kwargs: Any
@@ -41,16 +41,16 @@ class Transition(BaseGraph):
         """
         plt.close()
 
-        if exploration_space.dimension != dataset.dimension_X:
+        if self.exploration_space.dimension != dataset.dimension_X:
             raise ValueError(
                 "exploration dimension does not match dataset dimension")
 
         self.fig = _plot_transition(
             fig=plt.figure(*args, **kwargs),
-            X_spaces=exploration_space.spaces,
+            X_spaces=self.exploration_space.spaces,
             X=dataset.X,
             Y=dataset.Y,
-            X_names=exploration_space.names,
+            X_names=self.exploration_space.names,
             Y_names=dataset.Y_names
         )
         self.fig.tight_layout()

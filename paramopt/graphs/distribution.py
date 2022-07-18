@@ -18,16 +18,24 @@ class Distribution(BaseGraph):
     """Class for visualizing GPR fitting process."""
     PNG_PREFIX = "dist-"
 
-    def plot(
+    def __init__(
         self,
         exploration_space: 'ExplorationSpace',
+        objective_fn: Optional[Callable] = None,
+        acquisition_name: Optional[str] = None
+    ) -> None:
+        super().__init__()
+        self.exploration_space = exploration_space
+        self.objective_fn = objective_fn
+        self.acquisition_name = acquisition_name
+
+    def plot(
+        self,
         dataset: 'Dataset',
         mean: Optional[np.ndarray] = None,
         std: Optional[np.ndarray] = None,
         acquisition: Optional[np.ndarray] = None,
         next_X: Optional[Union[Tuple[Any], Any]] = None,
-        objective_fn: Optional[Callable] = None,
-        acquisition_name: Optional[str] = None,
         *args: Any,
         **kwargs: Any
     ) -> None:
@@ -40,38 +48,38 @@ class Distribution(BaseGraph):
         """
         plt.close()
 
-        if exploration_space.dimension != dataset.dimension_X:
+        if self.exploration_space.dimension != dataset.dimension_X:
             raise ValueError(
                 "exploration dimension does not match dataset dimension")
 
-        ndim = exploration_space.dimension
+        ndim = self.exploration_space.dimension
         if ndim == 1:
             self.fig = _plot_process_1d(
                 fig=plt.figure(*args, **kwargs),
                 X=dataset.X,
                 Y=dataset.Y,
-                X_grid=exploration_space.grid_spaces[0],
+                X_grid=self.exploration_space.grid_spaces[0],
                 mean=mean,
                 std=std,
                 acquisition=acquisition,
                 next_X=next_X,
-                objective_fn=objective_fn,
-                x_label=exploration_space.names[0],
+                objective_fn=self.objective_fn,
+                x_label=self.exploration_space.names[0],
                 y_label=dataset.Y_names[0],
-                acq_label=acquisition_name)
+                acq_label=self.acquisition_name)
         elif ndim == 2:
             self.fig = _plot_process_2d(
                 fig=plt.figure(*args, **kwargs),
                 X=dataset.X,
                 Y=dataset.Y,
-                X_grids=exploration_space.grid_spaces,
+                X_grids=self.exploration_space.grid_spaces,
                 mean=mean,
                 acquisition=acquisition,
                 next_X=next_X,
-                objective_fn=objective_fn,
-                X_labels=exploration_space.names,
+                objective_fn=self.objective_fn,
+                X_labels=self.exploration_space.names,
                 z_label=dataset.Y_names[0],
-                acq_label=acquisition_name)
+                acq_label=self.acquisition_name)
         else:
             raise NotImplementedError(f"{ndim}D plot is not supported")
         self.fig.tight_layout()
