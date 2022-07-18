@@ -5,12 +5,13 @@ import warnings
 
 import numpy as np
 
+from .cache import PredictionCache
 from ..acquisitions.base import BaseAcquisition
 from ..graphs.distribution import Distribution
 from ..graphs.transition import Transition
 from ..structures.parameter import ExplorationSpace
 from ..structures.dataset import Dataset
-from .. import utils
+from ..utils import formatted_now
 
 
 def _map_to_builtin_types(np_array: np.ndarray) -> Tuple[Any, ...]:
@@ -49,13 +50,19 @@ class BaseOptimizer:
         self.exploration_space = exploration_space
         self.dataset = dataset
         self.acquisition = acquisition
-        self._objective_fn = objective_fn
-        self._distribution = Distribution()
-        self._transition = Transition()
+        self._distribution = Distribution(
+            exploration_space=exploration_space,
+            objective_fn=objective_fn,
+            acquisition_name=acquisition.name)
+        self._transition = Transition(
+            exploration_space=exploration_space)
         self._next_combination = None
 
-        self.exploration_space.to_json(self.workdir)
-        self.dataset.to_csv(self.workdir)
+        self.__sugg_cache = PredictionCache("sugg_cache")
+        self.__plot_cache = PredictionCache("plot_cache")
+
+        self.exploration_space.to_json(workdir)
+        self.dataset.to_csv(workdir)
 
         if len(dataset) > 0:
             self._fit_to_model(dataset.X, dataset.Y)
@@ -86,7 +93,7 @@ class BaseOptimizer:
             If the label is set to 'None', current time is used instead.
         """
         dataset_added = self.dataset.add(
-            X, Y, label if label is not None else utils.formatted_now())
+            X, Y, label if label is not None else formatted_now())
         self._fit_to_model(dataset_added.X, dataset_added.Y)
         dataset_added.to_csv(self.workdir)
         self.dataset = dataset_added
@@ -94,6 +101,8 @@ class BaseOptimizer:
     def suggest(self) -> Tuple[Any, ...]:
         """Determines the next combination of parameters based on gpr predictions
         and given acquisition function.
+
+        The predictions are cached in a `sugg_cache.npz` file.
 
         Returns
         -------
@@ -105,12 +114,18 @@ class BaseOptimizer:
         mean, std = mean_.reshape(-1, 1), std_.reshape(-1, 1)
         acq = self.acquisition(mean, std, self.dataset.X, self.dataset.Y)
         self._next_combination = param_conbinations[np.argmax(acq)]
+
+        self.__sugg_cache.stack(
+            self.dataset.last_label, mean, std, acq, self._next_combination)
+        self.__sugg_cache.save(self.workdir)
         return _map_to_builtin_types(self._next_combination)
 
     def plot(self, display: bool = False) -> None:
         """Plots the distributions of dataset and gpr predictions, and the
         transition of parameter values and the objective score. The plots are
         saved as png files.
+
+        The predictions are cached in a `plot_cache.npz` file.
 
         Parameters
         ----------
@@ -138,12 +153,14 @@ class BaseOptimizer:
             mean=mean,
             std=std,
             acquisition=acq,
-            next_X=self._next_combination,
-            objective_fn=self._objective_fn,
-            acquisition_name=self.acquisition.__class__.__name__)
+            next_X=self._next_combination)
         if display:
             self._distribution.show()
         self._distribution.to_png(self.workdir, self.dataset.last_label)
+
+        self.__plot_cache.stack(
+            self.dataset.last_label, mean, std, acq, self._next_combination)
+        self.__plot_cache.save(self.workdir)
 
     def _fit_to_model(self, X: np.ndarray, Y: np.ndarray) -> None:
         """Trains the model using the entire dataset."""
