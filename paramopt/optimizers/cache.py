@@ -6,7 +6,7 @@ import numpy as np
 class PredictionCache:
 
     def __init__(self, name) -> None:
-        self.name
+        self.name = name
         self.data = {
             "label": [],
             "mean": [],
