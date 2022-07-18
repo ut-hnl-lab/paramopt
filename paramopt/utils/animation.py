@@ -4,6 +4,8 @@ from PIL import Image
 
 from natsort import natsorted
 
+from .string import _unique_path
+
 
 def create_gif(
     file_paths: List[str], duration: float = 1.0, loop: int = 0
@@ -50,13 +52,3 @@ def select_images() -> List[str]:
         filetypes=[
             ('PNG files', '*.png'), ('JPEG files', '*.jpg')], initialdir='.')
     return file_paths
-
-
-def _unique_path(path):
-    ret = path
-    stem, ext = osp.splitext(path)
-    i = 1
-    while osp.isfile(ret):
-        ret = stem + f' ({i})' + ext
-        i += 1
-    return ret
