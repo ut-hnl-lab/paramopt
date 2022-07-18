@@ -221,7 +221,7 @@ def _plot_process_2d(
             X_grids[0].shape[0], X_grids[1].shape[0])
         contf = ax.contourf(
             Xmeshes[0], Xmeshes[1], acquisition.T, zdir="z",
-            offset=z_from, levels=100, alpha=0.6, label=acq_label)
+            offset=z_from, levels=100, alpha=0.6)
         cb = fig.colorbar(
             contf, pad=0.11, shrink=0.7,
             label="Acquisition function"
