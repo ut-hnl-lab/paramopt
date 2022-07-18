@@ -3,8 +3,6 @@ from typing import Any, List, Optional, Union
 import numpy as np
 import pandas as pd
 
-from .. import utils
-
 
 class Dataset:
     """Data structure with X, Y and label. A label can be assigned to each
@@ -39,7 +37,7 @@ class Dataset:
         label_name: str = 'label',
         X: Optional[np.ndarray] = None,
         Y: Optional[np.ndarray] = None,
-        labels: Optional[List[Any]] = None
+        labels: Optional[np.ndarray] = None
     ) -> None:
         self.X_names = X_names if isinstance(X_names, list) else [X_names]
         self.Y_names = Y_names if isinstance(Y_names, list) else [Y_names]
@@ -57,17 +55,23 @@ class Dataset:
                 f"Y_names length ({n_Y}) does not match Y length ({n_Y_names})")
 
         self.label_name = label_name
-        self.__labels = labels if labels is not None else []
+        self.__labels = np.array(labels) if labels is not None else np.empty(0)
 
     def __repr__(self) -> str:
         return (f"{self.__class__.__name__}("
-                + ", ".join(f"{key}={val}" for key, val in dict(filter(
-                    lambda d: not d[0].startswith(f"_"), self.__dict__.items())
-                ).items())
+                + f"X_names={self.X_names}, Y_names={self.Y_names}"
+                + f"label_name=\"{self.label_name}\""
+                + f"X={self.__X}, Y={self.__Y}, labels={self.__labels}"
                 + ")")
 
     def __len__(self) -> int:
         return self.__X.shape[0]
+
+    def __getitem__(self, item) -> 'Dataset':
+        X = self.__X[item, :]
+        Y = self.__Y[item, :]
+        labels = self.__labels[item]
+        return Dataset(self.X_names, self.Y_names, self.label_name, X, Y, labels)
 
     @property
     def X(self) -> np.ndarray:
@@ -79,7 +83,7 @@ class Dataset:
 
     @property
     def labels(self) -> List[Any]:
-        return self.__labels
+        return self.__labels.tolist()
 
     @property
     def dimension_X(self) -> int:
@@ -125,9 +129,10 @@ class Dataset:
             raise ValueError(
                 f"length of X ({n_X}) does not match length of Y ({n_Y})")
 
-        label_adding = [label for _ in range(n_X)] \
-            if not isinstance(label, (list, tuple)) else label
-        n_label = len(label_adding)
+        label_adding = np.array([label for _ in range(n_X)]) \
+            if not isinstance(label, (list, tuple, np.ndarray)) \
+            else np.array(label)
+        n_label = label_adding.shape[0]
 
         if n_label != n_X:
             raise ValueError(
@@ -136,7 +141,7 @@ class Dataset:
 
         X = np.vstack((self.__X, X_adding))
         Y = np.vstack((self.__Y, Y_adding))
-        labels = self.__labels + label_adding
+        labels = np.append(self.__labels, label_adding)
 
         return Dataset(self.X_names, self.Y_names, self.label_name, X, Y, labels)
 
