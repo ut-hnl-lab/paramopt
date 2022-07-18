@@ -44,7 +44,7 @@ class BaseOptimizer:
         self.workdir = Path(workdir)
         if self.workdir.exists():
             warnings.warn(
-                f"'{workdir}' already exists. The contents may be replaced!",
+                f"'{workdir}' already exists. The contents will be replaced!",
                 UserWarning)
 
         self.exploration_space = exploration_space
@@ -137,9 +137,7 @@ class BaseOptimizer:
         mean, std = mean_.reshape(-1, 1), std_.reshape(-1, 1)
         acq = self.acquisition(mean, std, self.dataset.X, self.dataset.Y)
 
-        self._transition.plot(
-            exploration_space=self.exploration_space,
-            dataset=self.dataset)
+        self._transition.plot(dataset=self.dataset)
         if display:
             self._transition.show()
         self._transition.to_png(self.workdir, self.dataset.last_label)
@@ -148,11 +146,7 @@ class BaseOptimizer:
             return
 
         self._distribution.plot(
-            exploration_space=self.exploration_space,
-            dataset=self.dataset,
-            mean=mean,
-            std=std,
-            acquisition=acq,
+            dataset=self.dataset, mean=mean, std=std, acquisition=acq,
             next_X=self._next_combination)
         if display:
             self._distribution.show()
