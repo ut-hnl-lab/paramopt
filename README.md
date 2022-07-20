@@ -2,7 +2,7 @@
 <h1> Param Opt </h1>
 <h4>Param Opt helps the researcher quickly and easily find best experimental parameters.</h4>
 
-<img src="https://img.shields.io/badge/version-1.1.0-green"> <img src="https://img.shields.io/github/license/ut-hnl-lab/paramopt?color=yellow"> <img src="https://img.shields.io/badge/python-3.6%2B-blue">
+<img src="https://img.shields.io/badge/version-1.1.1-green"> <img src="https://img.shields.io/github/license/ut-hnl-lab/paramopt?color=yellow"> <img src="https://img.shields.io/badge/python-3.6%2B-blue">
 </div>
 
 ## Table of Contents
