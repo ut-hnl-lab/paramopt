@@ -45,14 +45,14 @@ class BayesianOptimizer(BaseOptimizer):
         objective_fn: Optional[Callable] = None,
         random_seed: Optional[int] = None,
     ) -> None:
-        super().__init__(
-            workdir, exploration_space, dataset, acquisition, objective_fn)
         self.model = model
         self.acquisition = acquisition
         self.random_seed = random_seed
-
         if random_seed is not None:
             self._fix_random_state()
+
+        super().__init__(
+            workdir, exploration_space, dataset, acquisition, objective_fn)
 
     def _fit_to_model(self, X: np.ndarray, Y: np.ndarray) -> None:
         self.model.fit(X, Y)

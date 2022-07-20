@@ -97,6 +97,7 @@ class BaseOptimizer:
         self._fit_to_model(dataset_added.X, dataset_added.Y)
         dataset_added.to_csv(self.workdir)
         self.dataset = dataset_added
+        self._next_combination = None
 
     def suggest(self) -> Tuple[Any, ...]:
         """Determines the next combination of parameters based on gpr predictions
