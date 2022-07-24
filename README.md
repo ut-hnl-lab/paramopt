@@ -90,7 +90,7 @@ Create a dataset consisting of an explanatory variables with `X_names` and objec
 ```python
 dataset = Dataset(X_names=exspace.names, Y_names="Evaluation")
 ```
-Basically, X_names is passed the parameter namew, and Y_names is passed the name of the evaluations.
+Basically, X_names is passed the parameter names, and Y_names is passed the name of the evaluations.
 The dataset is managed by the `BayesianOptimizer` class described below.
 
 This data can be exported to / imported from a csv file.
@@ -157,7 +157,7 @@ def gpr_generator(exp, nro):
         normalize_y=True, n_restarts_optimizer=nro)
 
 model = AutoHPGPR(
-    workdir=Path.cwd(), exploration_space=exspace, gpr_generator=gpr_generator,
+    workdir=workdir, exploration_space=space, gpr_generator=gpr_generator,
     exp=list(range(1, 6)), nro=list(range(0, 10)))
 ```
 
