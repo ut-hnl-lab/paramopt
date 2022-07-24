@@ -1,5 +1,6 @@
 from pathlib import Path
 import numpy as np
+import pytest
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import *
 
@@ -51,10 +52,28 @@ def explore_2d(bo: BaseOptimizer, noisy: bool = True) -> None:
         bo.plot()
 
 
+def test_base():
+    workdir = Path.cwd()/'tests'/'output'/'explore_base'
+    exspace = ExplorationSpace([ProcessParameter("Parameter 1", list(range(11)))])
+    dataset = Dataset(exspace.names, "Evaluation")
+    acquisition = UCB(1.0)
+
+    bo = BaseOptimizer(
+        workdir=workdir,
+        exploration_space=exspace,
+        dataset=dataset,
+        acquisition=acquisition,
+        objective_fn=f1,
+    )
+
+    with pytest.raises(NotImplementedError):
+        explore_1d(bo)
+
+
 def test_1d():
     workdir = Path.cwd()/'tests'/'output'/'explore_1d'
-    space = ExplorationSpace([ProcessParameter("Parameter 1", list(range(11)))])
-    dataset = Dataset(space.names, "Evaluation")
+    exspace = ExplorationSpace([ProcessParameter("Parameter 1", list(range(11)))])
+    dataset = Dataset(exspace.names, "Evaluation")
     model = GaussianProcessRegressor(
             kernel=RBF(length_scale=1, length_scale_bounds='fixed') \
                   * ConstantKernel() \
@@ -62,25 +81,27 @@ def test_1d():
             normalize_y=True)
     acquisition = UCB(1.0)
 
-    bayesian_optimizer = BayesianOptimizer(
+    bo = BayesianOptimizer(
         workdir=workdir,
-        exploration_space=space,
+        exploration_space=exspace,
         dataset=dataset,
         model=model,
         acquisition=acquisition,
         objective_fn=f1,
         random_seed=71
     )
-    explore_1d(bayesian_optimizer)
+
+    repr(bo)
+    explore_1d(bo)
 
 
 def test_2d():
     workdir = Path.cwd()/'tests'/'output'/'explore_2d'
-    space = ExplorationSpace([
+    exspace = ExplorationSpace([
         ProcessParameter("Parameter 1", list(range(150, 255, 5))),
         ProcessParameter("Parameter 2", list(range(10, 220, 10))),
     ])
-    dataset = Dataset(space.names, "Evaluation")
+    dataset = Dataset(exspace.names, "Evaluation")
     model = GaussianProcessRegressor(
             kernel=RBF(length_scale=50, length_scale_bounds='fixed') \
                   * ConstantKernel() \
@@ -88,21 +109,23 @@ def test_2d():
             normalize_y=True)
     acquisition = UCB(1.0)
 
-    bayesian_optimizer = BayesianOptimizer(
+    bo = BayesianOptimizer(
         workdir=workdir,
-        exploration_space=space,
+        exploration_space=exspace,
         dataset=dataset,
         model=model,
         acquisition=acquisition,
         objective_fn=f2,
         random_seed=71
     )
-    explore_2d(bayesian_optimizer)
+
+    repr(bo)
+    explore_2d(bo)
 
 
 def test_1d_autohp():
     workdir = Path.cwd()/'tests'/'output'/'explore_1d_autohp'
-    space = ExplorationSpace([ProcessParameter("Parameter 1", list(range(11)))])
+    exspace = ExplorationSpace([ProcessParameter("Parameter 1", list(range(11)))])
 
     def gpr_generator(ls, nro):
         return GaussianProcessRegressor(
@@ -115,30 +138,32 @@ def test_1d_autohp():
 
     model = AutoHPGPR(
         workdir=workdir,
-        exploration_space=space,
+        exploration_space=exspace,
         gpr_generator=gpr_generator,
-        ls=list(range(1, 11)),
-        nro=list(range(0, 10))
+        ls=[0.1, 1, 10],
+        nro=[0, 1, 2]
     )
 
-    dataset = Dataset(space.names, "Evaluation")
+    dataset = Dataset(exspace.names, "Evaluation")
     acquisition = UCB(2.0)
 
-    bayesian_optimizer = BayesianOptimizer(
+    bo = BayesianOptimizer(
         workdir=workdir,
-        exploration_space=space,
+        exploration_space=exspace,
         dataset=dataset,
         model=model,
         acquisition=acquisition,
         objective_fn=f1,
         random_seed=71
     )
-    explore_1d(bayesian_optimizer)
+
+    repr(bo)
+    explore_1d(bo)
 
 
 def test_2d_autohp():
     workdir = Path.cwd()/'tests'/'output'/'explore_2d_autohp'
-    space = ExplorationSpace([
+    exspace = ExplorationSpace([
         ProcessParameter("Parameter 1", list(range(150, 255, 5))),
         ProcessParameter("Parameter 2", list(range(10, 220, 10))),
     ])
@@ -154,23 +179,25 @@ def test_2d_autohp():
 
     model = AutoHPGPR(
         workdir=workdir,
-        exploration_space=space,
+        exploration_space=exspace,
         gpr_generator=gpr_generator,
         stop_fitting_score=0.98,
-        ls=list(range(10, 105, 5)),
-        nro=list(range(0, 10))
+        ls=[0.1, 1, 10],
+        nro=[0, 1, 2]
     )
 
-    dataset = Dataset(space.names, "Evaluation")
+    dataset = Dataset(exspace.names, "Evaluation")
     acquisition = UCB(2.0)
 
-    bayesian_optimizer = BayesianOptimizer(
+    bo = BayesianOptimizer(
         workdir=workdir,
-        exploration_space=space,
+        exploration_space=exspace,
         dataset=dataset,
         model=model,
         acquisition=acquisition,
         objective_fn=f2,
         random_seed=71
     )
-    explore_2d(bayesian_optimizer)
+
+    repr(bo)
+    explore_2d(bo)

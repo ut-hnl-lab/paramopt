@@ -27,6 +27,21 @@ def test_add_x1d_y1d():
     assert d.dimension_Y == 1
     assert d.last_label == "#1"
 
+    with pytest.raises(ValueError):
+        Dataset("x", "y", X=[1,2], Y=[3])
+
+    with pytest.raises(ValueError):
+        Dataset("x", "y", X=[1], Y=[2,3])
+
+    with pytest.raises(ValueError):
+        d.add([1, 2], 1, "#2")
+
+    with pytest.raises(ValueError):
+        d.add(1, [1, 2], "#2")
+
+    with pytest.raises(ValueError):
+        d.add([[1]], [[1], [2]], "#2")
+
 
 # 2次元X，2次元Y格納
 def test_add_x2d_y2d():
@@ -52,15 +67,6 @@ def test_add_x2d_y2d():
     assert d.last_label == "#2"
 
 
-# 配列と名前の長さのミスマッチ -> エラー
-def test_len_mismatch():
-    d = Dataset("X1", "Y1")
-    with pytest.raises(ValueError):
-        d.add([1, 2], 1, "#1")
-    with pytest.raises(ValueError):
-        d.add(1, [1, 2], "#1")
-
-
 # ファイル入出力
 def test_file_io():
     path = Path.cwd()/'tests'/'output'/'dataset_file_io'
@@ -82,12 +88,8 @@ def test_file_io():
 
     d4 = Dataset.from_csv(path/'custom_name.csv', 2, 2)
 
-
-# 異なる長さの配列の追加 -> エラー
-def test_add_invalid_len():
-    d = Dataset(["X1", "X2"], ["Y1", "Y2"])
     with pytest.raises(ValueError):
-        d.add([1], [2,3])
+        Dataset.from_csv(path/'custom_name.csv', 1, 1)
 
 
 # 複数データの追加
@@ -99,3 +101,10 @@ def test_add_multidata():
     assert d3.labels == ["init", "a", "b"]
     with pytest.raises(ValueError):
         d1.add([[1,2], [-1,-2]], [[3], [4]], ["a"])
+
+
+def test_slice():
+    d = Dataset("x", "y", X=[[1],[2],[3]], Y=[[4],[5],[6]])
+    d2 = d[:2]
+    assert (d2.X == np.array([[1],[2]])).all()
+    assert (d2.Y == np.array([[4],[5]])).all()

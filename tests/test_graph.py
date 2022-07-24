@@ -1,13 +1,16 @@
 from itertools import product
+from pathlib import Path
 
 from matplotlib import pyplot as plt
 import numpy as np
+import pytest
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
 
 from paramopt.acquisitions.ucb import UCB
 from paramopt.graphs.distribution import _plot_process_1d, _plot_process_2d
 from paramopt.graphs.transition import _plot_transition
+from paramopt.graphs import BaseGraph
 
 
 def f1(x):
@@ -38,7 +41,22 @@ def predict_with_gp(X_train, y_train, X):
     return mean_prediction, std_prediction, acquisition, next_X
 
 
+def test_base():
+    workdir = Path.cwd()/'tests'/'output'/'graph_base'
+
+    bg = BaseGraph()
+    with pytest.raises(NotImplementedError):
+        bg.plot()
+    with pytest.raises(ValueError):
+        bg.show()
+    with pytest.raises(ValueError):
+        bg.to_png(workdir)
+
+
 def test_dist_1d():
+    workdir = Path.cwd()/'tests'/'output'/'dist_1d'
+    workdir.mkdir(exist_ok=True)
+
     X = np.linspace(start=0, stop=10, num=1_000).reshape(-1, 1)
     y = np.squeeze(f1(X))
     X_train, y_train = make_train_dataset(X, y)
@@ -46,16 +64,19 @@ def test_dist_1d():
 
     fig = _plot_process_1d(plt.figure(), X_train, y_train, X)
     fig.tight_layout()
-    plt.show()
+    fig.savefig((workdir/"fig1").with_suffix(".png"))
     fig = _plot_process_1d(plt.figure(), X_train, y_train, X, mean_prediction, std_prediction)
     fig.tight_layout()
-    plt.show()
+    fig.savefig((workdir/"fig2").with_suffix(".png"))
     fig = _plot_process_1d(plt.figure(), X_train, y_train, X, mean_prediction, std_prediction, acquisition, next_X, f1)
     fig.tight_layout()
-    plt.show()
+    fig.savefig((workdir/"fig3").with_suffix(".png"))
 
 
 def test_dist_2d():
+    workdir = Path.cwd()/'tests'/'output'/'dist_2d'
+    workdir.mkdir(exist_ok=True)
+
     X1 = np.linspace(start=0, stop=10, num=100).reshape(-1, 1)
     X2 = np.linspace(start=20, stop=50, num=100).reshape(-1, 1)
     X = np.array(list(product(X1.flatten(), X2.flatten())))
@@ -65,16 +86,19 @@ def test_dist_2d():
 
     fig = _plot_process_2d(plt.figure(), X_train, y_train, [X1, X2])
     fig.tight_layout()
-    plt.show()
+    fig.savefig((workdir/"fig1").with_suffix(".png"))
     fig = _plot_process_2d(plt.figure(), X_train, y_train, [X1, X2], mean_prediction)
     fig.tight_layout()
-    plt.show()
+    fig.savefig((workdir/"fig2").with_suffix(".png"))
     fig = _plot_process_2d(plt.figure(), X_train, y_train, [X1, X2], mean_prediction, acquisition, next_X, f2)
     fig.tight_layout()
-    plt.show()
+    fig.savefig((workdir/"fig3").with_suffix(".png"))
 
 
 def test_transition_nd():
+    workdir = Path.cwd()/'tests'/'output'/'transition_nd'
+    workdir.mkdir(exist_ok=True)
+
     X1 = np.linspace(start=0, stop=10, num=100)
     X2 = np.linspace(start=200, stop=500, num=100)
     X3 = np.linspace(start=0, stop=-10, num=100)
@@ -90,4 +114,4 @@ def test_transition_nd():
 
     fig = _plot_transition(plt.figure(), [X1,X2,X3,X4], X_train, y_train, ["pp1","pp2","pp3","pp4"], ["y"], Y_bounds=(0,100))
     fig.tight_layout()
-    plt.show()
+    fig.savefig((workdir/"fig").with_suffix(".png"))
