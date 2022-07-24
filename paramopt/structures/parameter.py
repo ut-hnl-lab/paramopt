@@ -6,6 +6,8 @@ from typing import List, ClassVar, Optional, Union
 from dacite import from_dict
 import numpy as np
 
+from ..utils.string import indent_repr
+
 
 @dataclass
 class ExplorationSpace:
@@ -30,6 +32,13 @@ class ExplorationSpace:
             np.array(param.values) for param in self.process_parameters]
         self.__grid_spaces = [
             np.array(param.grid_values) for param in self.process_parameters]
+
+    def __repr__(self) -> str:
+        return (f"{self.__class__.__name__}(process_parameters=[\n"
+                + indent_repr(", \n".join([
+                    *(f"{p}" for p in self.process_parameters)
+                ]))
+                + "\n])")
 
     @property
     def dimension(self) -> int:
@@ -100,7 +109,7 @@ class ExplorationSpace:
         with filepath.open(mode='w') as f:
             json.dump(asdict(self), f, indent=4)
 
-    def conbinations(self) -> np.ndarray:
+    def combinations(self) -> np.ndarray:
         """Creates all combinations of process parameter values.
 
         Returns
@@ -111,7 +120,7 @@ class ExplorationSpace:
         return np.array(
             np.meshgrid(*self.spaces)).T.reshape(-1, self.dimension)
 
-    def grid_conbinations(self) -> np.ndarray:
+    def grid_combinations(self) -> np.ndarray:
         """Creates all combinations of grid values of process parameter spaces.
 
         Returns
