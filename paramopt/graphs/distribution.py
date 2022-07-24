@@ -11,9 +11,6 @@ from ..structures.dataset import Dataset
 from ..structures.parameter import ExplorationSpace
 
 
-simplefilter('ignore')
-
-
 class Distribution(BaseGraph):
     """Class for visualizing GPR fitting process."""
     PNG_PREFIX = "dist-"
