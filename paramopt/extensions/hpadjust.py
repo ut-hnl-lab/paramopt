@@ -56,7 +56,7 @@ class AutoHPGPR:
             raise ValueError("gpr_generator arguments does not match hparams")
 
         self.workdir = workdir
-        self.space_grid = exploration_space.grid_conbinations()
+        self.space_grid = exploration_space.grid_combinations()
         self.gpr_generator = gpr_generator
         self.hparams = hparams
         self.stop_fitting_score = stop_fitting_score

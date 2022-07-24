@@ -19,8 +19,8 @@ def test_add_1d():
     print([np.array(pp.values)])
     assert (es.spaces[0] == np.array(pp.values)).all()
     assert (es.grid_spaces[0] == np.array(pp.grid_values)).all()
-    assert (es.conbinations() == np.array([0,1,2]).reshape(-1,1)).all()
-    assert (es.grid_conbinations() == np.linspace(0,2,5).reshape(-1,1)).all()
+    assert (es.combinations() == np.array([0,1,2]).reshape(-1,1)).all()
+    assert (es.grid_combinations() == np.linspace(0,2,5).reshape(-1,1)).all()
 
 # 2次元空間格納
 def test_add_2d():
@@ -35,8 +35,8 @@ def test_add_2d():
     assert (es.spaces[1] == np.array(pp2.values)).all()
     assert (es.grid_spaces[0] == np.array(pp1.grid_values)).all()
     assert (es.grid_spaces[1] == np.array(pp2.grid_values)).all()
-    assert (es.conbinations() == np.array(list(product(np.array([0,1,2]), np.array([7,10])))).reshape(-1,2)).all()
-    assert (es.grid_conbinations() == np.array(list(product(np.linspace(0,2,5), np.linspace(7,10,5)))).reshape(-1,2)).all()
+    assert (es.combinations() == np.array(list(product(np.array([0,1,2]), np.array([7,10])))).reshape(-1,2)).all()
+    assert (es.grid_combinations() == np.array(list(product(np.linspace(0,2,5), np.linspace(7,10,5)))).reshape(-1,2)).all()
 
 # 重複空間名入力 -> エラー
 def test_name_dup():
