@@ -11,7 +11,7 @@ from ..graphs.distribution import Distribution
 from ..graphs.transition import Transition
 from ..structures.parameter import ExplorationSpace
 from ..structures.dataset import Dataset
-from ..utils import formatted_now
+from ..utils.string import formatted_now, indent_repr
 
 
 def _map_to_builtin_types(np_array: np.ndarray) -> Tuple[Any, ...]:
@@ -34,11 +34,11 @@ class BaseOptimizer:
     ) -> None:
         if len(exploration_space.names) != len(dataset.X_names):
             raise ValueError(
-                f"exploration space length ({len(exploration_space.names)}) does",
+                f"exploration space length ({len(exploration_space.names)}) does"
                 f" not match observation names ({len(dataset.X_names)})")
         if exploration_space.names != dataset.X_names:
             warnings.warn(
-                f"exploration space names ({exploration_space.names}) does not",
+                f"exploration space names ({exploration_space.names}) does not"
                 f" match observation names ({dataset.X_names})",
                 UserWarning)
         self.workdir = Path(workdir)
@@ -68,13 +68,14 @@ class BaseOptimizer:
             self._fit_to_model(dataset.X, dataset.Y)
 
     def __repr__(self) -> str:
-        return (f"{self.__class__.__name__}("
-                + ", ".join(re.sub('[ \n]+', ' ', f"{key}={val}") for key, val \
+        return (f"{self.__class__.__name__}(\n"
+                + indent_repr(",\n".join(
+                    f"{key}={repr(val)}" for key, val \
                     in dict(filter(
                         lambda d: not d[0].startswith(f"_"),
-                        self.__dict__.items())
-                ).items())
-                + ")")
+                        self.__dict__.items()
+                    )).items()))
+                + "\n)")
 
     def update(self, X: Any, Y: Any, label: Optional[Any] = None) -> None:
         """Update dataset and model with new X and corresponding y.
@@ -110,7 +111,7 @@ class BaseOptimizer:
         tuple
             Parameter conbination.
         """
-        param_conbinations = self.exploration_space.conbinations()
+        param_conbinations = self.exploration_space.combinations()
         mean_, std_ = self._predict_with_model(param_conbinations)
         mean, std = mean_.reshape(-1, 1), std_.reshape(-1, 1)
         acq = self.acquisition(mean, std, self.dataset.X, self.dataset.Y)
@@ -133,7 +134,7 @@ class BaseOptimizer:
         display: bool, default to `False`
             If `True`, the plots are displayed on separated windows.
         """
-        param_conbinations = self.exploration_space.grid_conbinations()
+        param_conbinations = self.exploration_space.grid_combinations()
         mean_, std_ = self._predict_with_model(param_conbinations)
         mean, std = mean_.reshape(-1, 1), std_.reshape(-1, 1)
         acq = self.acquisition(mean, std, self.dataset.X, self.dataset.Y)
