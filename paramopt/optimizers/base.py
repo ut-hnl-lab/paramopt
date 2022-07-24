@@ -40,12 +40,12 @@ class BaseOptimizer:
             warnings.warn(
                 f"exploration space names ({exploration_space.names}) does not"
                 f" match observation names ({dataset.X_names})",
-                UserWarning)
+                UserWarning, stacklevel=2)
         self.workdir = Path(workdir)
         if self.workdir.exists():
             warnings.warn(
                 f"'{workdir}' already exists. The contents will be replaced!",
-                UserWarning)
+                UserWarning, stacklevel=2)
 
         self.exploration_space = exploration_space
         self.dataset = dataset
