@@ -4,7 +4,7 @@ from PIL import Image
 
 from natsort import natsorted
 
-from .string import _unique_path
+from .string import unique_path
 
 
 def create_gif(
@@ -25,7 +25,7 @@ def create_gif(
         print('No file')
         return
     folder = osp.dirname(file_paths[0])
-    save_path = _unique_path(osp.join(folder, 'animation.gif'))
+    save_path = unique_path(osp.join(folder, 'animation.gif'))
     images = list(map(lambda file: Image.open(file), natsorted(file_paths)))
     images[0].save(
         save_path, save_all=True, append_images=images[1:],
