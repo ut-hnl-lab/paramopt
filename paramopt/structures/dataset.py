@@ -3,6 +3,8 @@ from typing import Any, List, Optional, Union
 import numpy as np
 import pandas as pd
 
+from ..utils.string import indent_repr
+
 
 class Dataset:
     """Data structure with X, Y and label. A label can be assigned to each
@@ -49,20 +51,25 @@ class Dataset:
 
         if n_X_names != n_X:
             raise ValueError(
-                f"X_names length ({n_X}) does not match X length ({n_X_names})")
+                f"X_names length ({n_X_names}) does not match X length ({n_X})")
         if n_Y_names != n_Y:
             raise ValueError(
-                f"Y_names length ({n_Y}) does not match Y length ({n_Y_names})")
+                f"Y_names length ({n_Y_names}) does not match Y length ({n_Y})")
 
         self.label_name = label_name
         self.__labels = np.array(labels) if labels is not None else np.empty(0)
 
     def __repr__(self) -> str:
-        return (f"{self.__class__.__name__}("
-                + f"X_names={self.X_names}, Y_names={self.Y_names}"
-                + f"label_name=\"{self.label_name}\""
-                + f"X={self.__X}, Y={self.__Y}, labels={self.__labels}"
-                + ")")
+        return (f"{self.__class__.__name__}(\n"
+                + indent_repr(",\n".join([
+                    f"X_names={self.X_names}",
+                    f"Y_names={self.Y_names}",
+                    f"label_name=\"{self.label_name}\"",
+                    f"X={repr(self.__X)}".replace("\n      ",""),
+                    f"Y={repr(self.__Y)}".replace("\n      ",""),
+                    f"labels={self.__labels}"
+                ]))
+                + "\n)")
 
     def __len__(self) -> int:
         return self.__X.shape[0]
