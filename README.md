@@ -1,6 +1,6 @@
 <div align="center">
 <h1> Param Opt </h1>
-<h4>Param Opt helps the researcher quickly and easily find best experimental parameters.</h4>
+<h4>Param Opt is a bayesian optimization library that integrates training and prediction of experimental data, recording and visualization of the process.</h4>
 
 <img src="https://img.shields.io/badge/python-3.8-blue">
 <img src="https://img.shields.io/badge/version-1.1.2-green">
