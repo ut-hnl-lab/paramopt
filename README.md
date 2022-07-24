@@ -2,7 +2,10 @@
 <h1> Param Opt </h1>
 <h4>Param Opt helps the researcher quickly and easily find best experimental parameters.</h4>
 
-<img src="https://img.shields.io/badge/version-1.1.1-green"> <img src="https://img.shields.io/github/license/ut-hnl-lab/paramopt?color=yellow"> <img src="https://img.shields.io/badge/python-3.6%2B-blue">
+<img src="https://img.shields.io/badge/python-3.8-blue">
+<img src="https://img.shields.io/badge/version-1.1.2-green">
+<img src="https://img.shields.io/github/license/ut-hnl-lab/paramopt?color=yellow">
+<img src="https://img.shields.io/badge/coverage-93%25-orange">
 </div>
 
 ## Table of Contents
@@ -70,13 +73,13 @@ param2 = ProcessParameter(name="Heating Time", values=[10, 20, 40, 80, 150, 220]
 
 Then, define a exploration space consisting of the parameters.
 ```python
-space = ExplorationSpace([param1, param2])
+exspace = ExplorationSpace([param1, param2])
 ```
 
 This definition can be exported to / imported from a json file.
 ```python
-space.to_json(workdir)  # export
-space = ExplorationSpace.from_json(workdir)  # import
+exspace.to_json(workdir)  # export
+exspace = ExplorationSpace.from_json(workdir)  # import
 ```
 
 ### <li>Creating Dataset</li>
@@ -85,7 +88,7 @@ space = ExplorationSpace.from_json(workdir)  # import
 
 Create a dataset consisting of an explanatory variables with `X_names` and objective variables with `Y_names`.
 ```python
-dataset = Dataset(X_names=space.names, Y_names="Evaluation")
+dataset = Dataset(X_names=exspace.names, Y_names="Evaluation")
 ```
 Basically, X_names is passed the parameter namew, and Y_names is passed the name of the evaluations.
 The dataset is managed by the `BayesianOptimizer` class described below.
@@ -116,7 +119,7 @@ The optimization flow is as follows:
 ```python
 # Define optimizer
 bo = BayesianOptimizer(
-    workdir=Path.cwd(), exploration_space=space, dataset=dataset, model=model,
+    workdir=workdir, exploration_space=exspace, dataset=dataset, model=model,
     acquisition=acquisition, objective_fn=experiment, random_seed=71)
 
 # For max iterations:
@@ -154,7 +157,7 @@ def gpr_generator(exp, nro):
         normalize_y=True, n_restarts_optimizer=nro)
 
 model = AutoHPGPR(
-    workdir=Path.cwd(), exploration_space=space, gpr_generator=gpr_generator,
+    workdir=Path.cwd(), exploration_space=exspace, gpr_generator=gpr_generator,
     exp=list(range(1, 6)), nro=list(range(0, 10)))
 ```
 
