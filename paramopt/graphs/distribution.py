@@ -224,7 +224,6 @@ def _plot_process_2d(
             label="Acquisition function"
                  + (f" ({acq_label})" if acq_label is not None else ""))
         cb.formatter.set_powerlimits((0, 0))
-        ax.set_zlim(z_from, z_to)
 
     # Next location plot
     if next_X is not None:
@@ -233,6 +232,7 @@ def _plot_process_2d(
             linewidth=0.8, zorder=99, label="Acquisition max")
 
     # Additional axes settings
+    ax.set_zlim(z_from, z_to)
     leg = ax.legend(loc='upper right')
     for line in leg.get_lines():
         line.set_linewidth(1.5)
